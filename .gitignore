@@ -10,6 +10,7 @@ dist/
 # credentials, which this project has no reason to ever need client-side.
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 serviceAccountKey*.json
