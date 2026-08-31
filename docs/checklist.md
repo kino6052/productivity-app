@@ -104,10 +104,15 @@ complexity than the app needs — see Open Questions.
 Integration-style essence tests proving facets compose freely on one item —
 this is the actual proof of "every entity usable in every app."
 
-- [ ] an item created via notes (note facet) can receive a kanban facet and appear on a board
-- [ ] an item with a kanban facet can receive a calendar facet and appear on a day
-- [ ] an item with a calendar facet can receive a pomodoro facet and be timed
-- [ ] removing one facet leaves the others intact (facets are independent)
+- [x] an item created via notes (note facet) can receive a kanban facet and appear on a board (→ packages/app/src/essence/cross-app-interconnection.test.ts)
+- [x] an item with a kanban facet can receive a calendar facet and appear on a day (→ packages/app/src/essence/cross-app-interconnection.test.ts)
+- [x] an item with a calendar facet can receive a pomodoro facet and be timed (→ packages/app/src/essence/cross-app-interconnection.test.ts)
+- [x] removing one facet leaves the others intact (facets are independent) (→ packages/app/src/essence/cross-app-interconnection.test.ts)
+
+All four passed against the existing functions with zero new production
+code or glue — `packages/app` was scaffolded here specifically as the one
+package allowed to depend on every mini-app essence (it doubles as where
+Part 7's composition roots will live).
 
 ## Part 7 — Composition Roots — deferred until essence is solid
 

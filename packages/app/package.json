@@ -1,0 +1,14 @@
+{
+  "name": "@productivity-app/app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/essence/index.ts",
+  "dependencies": {
+    "@productivity-app/core": "workspace:*",
+    "@productivity-app/pomodoro-essence": "workspace:*",
+    "@productivity-app/kanban-essence": "workspace:*",
+    "@productivity-app/calendar-essence": "workspace:*",
+    "@productivity-app/notes-essence": "workspace:*"
+  }
+}
