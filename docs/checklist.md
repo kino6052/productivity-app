@@ -94,8 +94,8 @@ complexity than the app needs — see Open Questions.
 - [x] `addNote(state, itemId, body)` — attaches/updates the note facet, preserving any existing `parentId` (→ `addNote`, packages/notes-essence/src/essence/add-note.ts)
 - [x] `nestUnder(state, itemId, parentId)` — sets `note.parentId`, lazily creating an empty-body note facet if the item had none (→ `nestUnder`, packages/notes-essence/src/essence/nest-under.ts)
 - [x] `moveOutOfParent(state, itemId)` — clears `parentId` (promotes to a root-level notebook) (→ `moveOutOfParent`, packages/notes-essence/src/essence/move-out-of-parent.ts)
-- [ ] `selectChildren(state, parentId)`
-- [ ] `selectRootNotes(state)` — note-faceted items with no parent
+- [x] `selectChildren(state, parentId)` (→ `selectChildren`, packages/notes-essence/src/essence/selectors.ts)
+- [x] `selectRootNotes(state)` — note-faceted items with no parent (→ `selectRootNotes`, packages/notes-essence/src/essence/selectors.ts)
 - [ ] `selectNoteTree(state, rootId)` — full nested tree from a root
 - [x] guard: `nestUnder` rejects creating a cycle (an item can't become its own ancestor) — built into `nestUnder` from the start rather than bolted on (→ `isSelfOrAncestor`, packages/notes-essence/src/essence/nest-under.ts)
 
