@@ -128,8 +128,10 @@ Building framework-free first (conduit's phase 1), starting with Pomodoro:
 
 - [x] `formatDuration(totalSeconds)` (→ `formatDuration`, packages/app/src/accidents/view/essence/format-duration.ts)
 - [x] `renderPomodoro(state)` — item list, start/pause/resume controls, completed counts (→ `renderPomodoro`, packages/app/src/accidents/view/essence/pomodoro.ts)
-- [ ] `index.essence.ts` — essence only, no framework, wired to `renderPomodoro`
-- [ ] `states.ts` — named states for the essence-view grounding tool
+- [x] `index.essence.ts` — essence only, no framework, wired to `renderPomodoro` (→ `render`, `handleClick`, packages/app/src/index.essence.ts). **Verified live** via the Browser tool at `bun run essence-view` (port 5321): all 5 named states render correctly, and real clicks on Start/Pause/Resume correctly invoke `startSession`/`pauseSession`/`resumeSession` and re-render — not just unit-tested, actually clicked through.
+- [x] `states.ts` — 5 named states for Pomodoro grounding (Empty, One item no session, Running session, Paused session, One pomodoro completed) (→ `namedStates`, packages/app/src/accidents/view/essence/states.ts)
+- [x] `main.ts` — mount point wiring `index.essence.ts` to the real DOM (→ packages/app/src/accidents/view/essence/main.ts)
+- [x] `scripts/serve-essence-view.ts` + `index.html`, ported from conduit, run via `bun run essence-view`
 - [ ] essence-view render functions for kanban, calendar, notes
 - [ ] `index.essential-dependencies.ts` — real logic, in-memory adapters
 - [ ] `index.ts` — real Solid app

@@ -29,6 +29,14 @@ export default defineConfig({
         "packages/core/src/accidents/persistence/persistence-local-storage.ts",
         // Real network IO (Firestore) -- same category as the line above.
         "packages/adapters-firebase/src/persistence-firebase.ts",
+        // Composition root (real DOM) and its mount point -- verified
+        // live via the Browser tool, not under bun:test, same precedent
+        // as conduit's index.essence.ts / accidents/view/essence/main.ts.
+        "packages/app/src/index.essence.ts",
+        "packages/app/src/accidents/view/essence/main.ts",
+        // Fixture data, not a capability -- same category as conduit's
+        // states.ts (no states.test.ts there either).
+        "packages/app/src/accidents/view/essence/states.ts",
       ],
       reporter: ["text", "json-summary"],
     },

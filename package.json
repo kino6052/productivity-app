@@ -9,7 +9,8 @@
   "scripts": {
     "test": "bun test",
     "test:coverage": "bun test --coverage",
-    "test:branches": "node scripts/branch-coverage.mjs"
+    "test:branches": "node scripts/branch-coverage.mjs",
+    "essence-view": "bun scripts/serve-essence-view.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

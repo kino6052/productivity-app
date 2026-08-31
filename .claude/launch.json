@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "essence-view",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["scripts/serve-essence-view.ts"],
+      "port": 5321
+    }
+  ]
+}
