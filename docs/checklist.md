@@ -34,7 +34,7 @@ the calendar, a calendar event can be timed with a pomodoro, etc.
 Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 - [x] `TState` type (→ `TState`, packages/core/src/essence/state.ts)
-- [x] `TItem` type: `id`, `title`, `createdAt` (→ `TItem`, packages/core/src/essence/state.ts) + optional facets `pomodoro` (→ `TPomodoroFacet`), `kanban` (→ `TKanbanFacet`, both packages/core/src/essence/state.ts), `calendar`, `note` (remaining two added as their mini app's TDD requires them)
+- [x] `TItem` type: `id`, `title`, `createdAt` (→ `TItem`, packages/core/src/essence/state.ts) + optional facets `pomodoro` (→ `TPomodoroFacet`), `kanban` (→ `TKanbanFacet`), `calendar` (→ `TCalendarFacet`, all packages/core/src/essence/state.ts), `note` (added as notes-essence's TDD requires it)
 - [x] `createInitialState()` (→ `createInitialState`, packages/core/src/essence/state.ts)
 - [x] `addItem(state, title)` (→ `addItem`, packages/core/src/essence/item.ts)
 - [x] `renameItem(state, id, title)` (→ `renameItem`, packages/core/src/essence/rename-item.ts)
@@ -68,7 +68,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 ## Part 4 — Calendar Essence (`packages/calendar-essence`) — deferred
 
 - [x] package scaffold only this milestone (→ packages/calendar-essence/package.json)
-- [ ] `scheduleItem(state, itemId, start, end)`
+- [x] `scheduleItem(state, itemId, start, end)` (→ `scheduleItem`, packages/calendar-essence/src/essence/schedule-item.ts)
 - [ ] `unscheduleItem(state, itemId)`
 - [ ] `selectItemsOnDay(state, day)`
 - [ ] `selectItemsInRange(state, start, end)`

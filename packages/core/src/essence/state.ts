@@ -8,6 +8,11 @@ export type TKanbanFacet = {
   order: number;
 };
 
+export type TCalendarFacet = {
+  start: Date;
+  end: Date;
+};
+
 // Optional facets, one per mini app -- an item only picks up the facets it
 // needs, and any mini app's essence only ever reads/writes its own facet.
 // This is what makes one item usable across every app (docs/conventions.md).
@@ -17,6 +22,7 @@ export type TItem = {
   createdAt: Date;
   pomodoro?: TPomodoroFacet;
   kanban?: TKanbanFacet;
+  calendar?: TCalendarFacet;
 };
 
 export type TState = {
