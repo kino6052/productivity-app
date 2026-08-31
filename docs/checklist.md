@@ -32,9 +32,9 @@ the calendar, a calendar event can be timed with a pomodoro, etc.
 
 Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
-- [ ] `TState` type
-- [ ] `TItem` type: `id`, `title`, `createdAt` + optional facets `pomodoro`, `kanban`, `calendar`, `note`
-- [ ] `createInitialState()`
+- [x] `TState` type (→ `TState`, packages/core/src/essence/state.ts)
+- [ ] `TItem` type: `id`, `title`, `createdAt` (→ `TItem`, packages/core/src/essence/state.ts) + optional facets `pomodoro`, `kanban`, `calendar`, `note` (added as each mini app's TDD requires them)
+- [x] `createInitialState()` (→ `createInitialState`, packages/core/src/essence/state.ts)
 - [ ] `addItem(state, title)`
 - [ ] `renameItem(state, id, title)`
 - [ ] `removeItem(state, id)`
