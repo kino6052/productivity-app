@@ -215,7 +215,8 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 - [x] `createProject(state, title)` (→ `createProject`, packages/projects-essence/src/essence/create-project.ts)
 - [x] `assignToProject(state, itemId, projectId)` (→ `assignToProject`, packages/projects-essence/src/essence/assign-to-project.ts)
 - [x] `selectProjects(state)` / `selectItemsInProject(state, projectId)` (→ `selectProjects`, `selectItemsInProject`, packages/projects-essence/src/essence/selectors.ts)
-- [ ] `compileProjectSelectorViewModel` + `ProjectSelectorView.tsx`
+- [x] `compileProjectSelectorViewModel(state, getState, setState)` (→ `compileProjectSelectorViewModel`, packages/app/src/view-models/project-selector-view-model.ts)
+- [ ] `ProjectSelectorView.tsx`
 - [ ] Wire project scoping into `App.tsx` for all four mini-app views
 - [ ] Existing create-item actions tag the new item with the active `projectId`
 - [ ] Verified live
