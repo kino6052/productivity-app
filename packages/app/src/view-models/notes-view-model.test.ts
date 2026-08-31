@@ -4,6 +4,8 @@ import { addItem } from "@productivity-app/core/src/essence/item";
 import { createMemoryState } from "@productivity-app/core/src/accidents/state-management/state-management";
 import { addNote } from "@productivity-app/notes-essence/src/essence/add-note";
 import { nestUnder } from "@productivity-app/notes-essence/src/essence/nest-under";
+import { createProject } from "@productivity-app/projects-essence/src/essence/create-project";
+import { assignToProject } from "@productivity-app/projects-essence/src/essence/assign-to-project";
 import { compileNotesViewModel } from "./notes-view-model";
 
 describe("compileNotesViewModel", () => {
@@ -55,5 +57,30 @@ describe("compileNotesViewModel", () => {
     expect(after.items).toHaveLength(1);
     expect(after.items[0].title).toBe("My notebook");
     expect(after.items[0].note).toEqual({ body: "", parentId: undefined });
+  });
+
+  it("onAddChildClick inherits the parent's projectId", () => {
+    const withProject = createProject(createInitialState(), "Website redesign");
+    const projectId = withProject.items[0].id;
+    const withNotebook = addItem(withProject, "Notebook");
+    const notebookId = withNotebook.items[1].id;
+    const withNote = assignToProject(addNote(withNotebook, notebookId, ""), notebookId, projectId);
+    const memory = createMemoryState(withNote);
+    const vm = compileNotesViewModel(withNote, memory.getState, memory.setState);
+
+    vm.roots[0].onAddChildClick();
+
+    expect(memory.getState().items[2].projectId).toBe(projectId);
+  });
+
+  it("onCreateRootNote tags the new note with the given projectId", () => {
+    const withProject = createProject(createInitialState(), "Website redesign");
+    const projectId = withProject.items[0].id;
+    const memory = createMemoryState(withProject);
+    const vm = compileNotesViewModel(withProject, memory.getState, memory.setState, projectId);
+
+    vm.onCreateRootNote("My notebook");
+
+    expect(memory.getState().items[1].projectId).toBe(projectId);
   });
 });

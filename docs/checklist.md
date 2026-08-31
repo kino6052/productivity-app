@@ -218,7 +218,7 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 - [x] `compileProjectSelectorViewModel(state, getState, setState)` (→ `compileProjectSelectorViewModel`, packages/app/src/view-models/project-selector-view-model.ts)
 - [ ] `ProjectSelectorView.tsx`
 - [ ] Wire project scoping into `App.tsx` for all four mini-app views
-- [ ] Existing create-item actions tag the new item with the active `projectId`
+- [x] `onAddChild` inherits its parent's `projectId` automatically (no explicit parameter needed — a child belongs to whatever project its parent already does); `onCreateRootNote` takes `projectId` explicitly since a root note has no parent to inherit one from. `compileNotesViewModel` gained an optional `projectId` parameter threading this through (→ packages/app/src/view-models/notes-view-model.ts)
 - [ ] Verified live
 
 ## Part 11 — Context Menu (new, requested — not yet designed)
