@@ -62,8 +62,8 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 - [x] package scaffold only this milestone (→ packages/kanban-essence/package.json)
 - [x] `moveItem(state, itemId, toColumn)` — appends the item to the end of the destination column (→ `moveItem`, packages/kanban-essence/src/essence/move-item.ts)
 - [x] `reorderItem(state, itemId, toIndex)` — reorders within the item's own column only (→ `reorderItem`, packages/kanban-essence/src/essence/reorder-item.ts)
-- [ ] `selectItemsByColumn(state, column)`
-- [ ] `selectColumns(state)`
+- [x] `selectItemsByColumn(state, column)` (→ `selectItemsByColumn`, packages/kanban-essence/src/essence/selectors.ts)
+- [x] `selectColumns(state)` (→ `selectColumns`, packages/kanban-essence/src/essence/selectors.ts)
 
 ## Part 4 — Calendar Essence (`packages/calendar-essence`) — deferred
 
