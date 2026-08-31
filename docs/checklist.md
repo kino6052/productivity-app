@@ -51,7 +51,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 - [x] `TPomodoroState` (`TState` + `activeSession`) + `createInitialPomodoroState()` (→ `TPomodoroState`, `createInitialPomodoroState`, packages/pomodoro-essence/src/essence/state.ts)
 - [x] `startSession(state, itemId)` — attaches an active session; rejects starting a second one (→ `startSession`, packages/pomodoro-essence/src/essence/start-session.ts)
 - [x] `tick(state)` — decrements remaining time; reaching zero flips phase (work ↔ break) and completes the session on work→break (→ `tick`, packages/pomodoro-essence/src/essence/tick.ts)
-- [ ] `pauseSession(state)` / `resumeSession(state)`
+- [x] `pauseSession(state)` / `resumeSession(state)` (→ `pauseSession`, `resumeSession`, packages/pomodoro-essence/src/essence/pause-resume.ts)
 - [x] `completeSession(state, itemId)` — increments the item's `pomodoro.completedCount` (→ `completeSession`, packages/pomodoro-essence/src/essence/complete-session.ts)
 - [ ] `selectActiveSession(state)`
 - [ ] `selectItemsWithPomodoro(state)`
