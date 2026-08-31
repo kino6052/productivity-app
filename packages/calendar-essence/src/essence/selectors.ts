@@ -4,3 +4,8 @@ const isSameUtcDay = (a: Date, b: Date): boolean => a.toISOString().slice(0, 10)
 
 export const selectItemsOnDay = (state: TState, day: Date): TItem[] =>
   state.items.filter((item) => item.calendar !== undefined && isSameUtcDay(item.calendar.start, day));
+
+export const selectItemsInRange = (state: TState, start: Date, end: Date): TItem[] =>
+  state.items.filter(
+    (item) => item.calendar !== undefined && item.calendar.start >= start && item.calendar.start <= end,
+  );

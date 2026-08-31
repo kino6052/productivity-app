@@ -71,7 +71,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 - [x] `scheduleItem(state, itemId, start, end)` (→ `scheduleItem`, packages/calendar-essence/src/essence/schedule-item.ts)
 - [x] `unscheduleItem(state, itemId)` (→ `unscheduleItem`, packages/calendar-essence/src/essence/unschedule-item.ts)
 - [x] `selectItemsOnDay(state, day)` — matches by UTC calendar date of `calendar.start` (→ `selectItemsOnDay`, packages/calendar-essence/src/essence/selectors.ts)
-- [ ] `selectItemsInRange(state, start, end)`
+- [x] `selectItemsInRange(state, start, end)` — matches by `calendar.start` falling within `[start, end]` inclusive (→ `selectItemsInRange`, packages/calendar-essence/src/essence/selectors.ts)
 
 ## Part 5 — Notes Essence (`packages/notes-essence`) — new, deferred behind Pomodoro
 
