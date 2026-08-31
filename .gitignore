@@ -3,3 +3,16 @@ coverage/
 dist/
 *.tsbuildinfo
 .DS_Store
+
+# Secrets -- never commit these. The Firebase *web* config in
+# packages/adapters-firebase/src/firebase-config.ts is not a secret (see
+# that file's comment); real secrets would be service-account/Admin SDK
+# credentials, which this project has no reason to ever need client-side.
+.env
+.env.*
+*.pem
+*.key
+serviceAccountKey*.json
+firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
