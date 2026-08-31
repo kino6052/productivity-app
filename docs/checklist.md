@@ -96,7 +96,7 @@ complexity than the app needs — see Open Questions.
 - [x] `moveOutOfParent(state, itemId)` — clears `parentId` (promotes to a root-level notebook) (→ `moveOutOfParent`, packages/notes-essence/src/essence/move-out-of-parent.ts)
 - [x] `selectChildren(state, parentId)` (→ `selectChildren`, packages/notes-essence/src/essence/selectors.ts)
 - [x] `selectRootNotes(state)` — note-faceted items with no parent (→ `selectRootNotes`, packages/notes-essence/src/essence/selectors.ts)
-- [ ] `selectNoteTree(state, rootId)` — full nested tree from a root
+- [x] `selectNoteTree(state, rootId)` — full nested tree from a root (→ `selectNoteTree`, packages/notes-essence/src/essence/select-note-tree.ts)
 - [x] guard: `nestUnder` rejects creating a cycle (an item can't become its own ancestor) — built into `nestUnder` from the start rather than bolted on (→ `isSelfOrAncestor`, packages/notes-essence/src/essence/nest-under.ts)
 
 ## Part 6 — Cross-App Interconnection
