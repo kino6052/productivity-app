@@ -90,7 +90,8 @@ alternative if `parentId` nesting (and its cycle guard) proves more
 complexity than the app needs — see Open Questions.
 
 - [x] package scaffold only this milestone (→ packages/notes-essence/package.json)
-- [ ] `addNote(state, itemId, body)` — attaches/updates the note facet on an existing item
+- [x] `TNoteFacet` (`body`, `parentId`) added to `TItem` (→ `TNoteFacet`, packages/core/src/essence/state.ts) — resolves the "plain text for now" open question: `body` is a plain `string`
+- [x] `addNote(state, itemId, body)` — attaches/updates the note facet, preserving any existing `parentId` (→ `addNote`, packages/notes-essence/src/essence/add-note.ts)
 - [ ] `nestUnder(state, itemId, parentId)` — sets `note.parentId`
 - [ ] `moveOutOfParent(state, itemId)` — clears `parentId` (promotes to a root-level notebook)
 - [ ] `selectChildren(state, parentId)`
