@@ -45,7 +45,8 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 ## Part 1a — Core Accidents (generic ports)
 
 - [x] `TPersistence<T>` contract + `createMemoryPersistence()` (→ `createMemoryPersistence`, packages/core/src/accidents/persistence/persistence.ts)
-- [ ] `TStateManagement<T>` contract + `createMemoryState()` (deferred until a composition root needs it)
+- [x] `TStateManagement<T>` contract + `createMemoryState()` (→ `createMemoryState`, packages/core/src/accidents/state-management/state-management.ts)
+- [ ] `createRxState()` (RxJS-backed) — deferred until Part 7 picks a UI stack that actually needs it; conduit keeps both in the same file, but adding an rxjs dependency ahead of that decision would be presumptuous
 
 ## Part 2 — Pomodoro Essence (`packages/pomodoro-essence`) — BUILD FIRST
 
