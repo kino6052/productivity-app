@@ -38,8 +38,8 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 - [x] `addItem(state, title)` (→ `addItem`, packages/core/src/essence/item.ts)
 - [ ] `renameItem(state, id, title)`
 - [ ] `removeItem(state, id)`
-- [ ] `selectItem(state, id)`
-- [ ] `selectAllItems(state)`
+- [x] `selectItem(state, id)` (→ `selectItem`, packages/core/src/essence/selectors.ts)
+- [x] `selectAllItems(state)` (→ `selectAllItems`, packages/core/src/essence/selectors.ts)
 
 ## Part 1a — Core Accidents (generic ports)
 
