@@ -93,7 +93,7 @@ complexity than the app needs — see Open Questions.
 - [x] `TNoteFacet` (`body`, `parentId`) added to `TItem` (→ `TNoteFacet`, packages/core/src/essence/state.ts) — resolves the "plain text for now" open question: `body` is a plain `string`
 - [x] `addNote(state, itemId, body)` — attaches/updates the note facet, preserving any existing `parentId` (→ `addNote`, packages/notes-essence/src/essence/add-note.ts)
 - [x] `nestUnder(state, itemId, parentId)` — sets `note.parentId`, lazily creating an empty-body note facet if the item had none (→ `nestUnder`, packages/notes-essence/src/essence/nest-under.ts)
-- [ ] `moveOutOfParent(state, itemId)` — clears `parentId` (promotes to a root-level notebook)
+- [x] `moveOutOfParent(state, itemId)` — clears `parentId` (promotes to a root-level notebook) (→ `moveOutOfParent`, packages/notes-essence/src/essence/move-out-of-parent.ts)
 - [ ] `selectChildren(state, parentId)`
 - [ ] `selectRootNotes(state)` — note-faceted items with no parent
 - [ ] `selectNoteTree(state, rootId)` — full nested tree from a root
