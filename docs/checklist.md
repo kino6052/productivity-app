@@ -19,7 +19,7 @@ the calendar, a calendar event can be timed with a pomodoro, etc.
 
 ## Part 0 — Repo & Tooling (infra/accidents)
 
-- [x] git repo initialized, remote set to `https://github.com/kino6052/productivity-app` (→ local commits made; not yet pushed, see below)
+- [x] git repo initialized, remote set to `https://github.com/kino6052/productivity-app` (pushed)
 - [x] root `package.json` with bun workspaces (`packages/*`)
 - [x] `tsconfig.base.json`
 - [x] root `vitest.config.mts` (`bun:test` alias, istanbul coverage, exclude list)
@@ -27,7 +27,7 @@ the calendar, a calendar event can be timed with a pomodoro, etc.
 - [x] `.gitignore`
 - [x] `docs/conventions.md` (condensed essence/accidents + TDD rules for this repo)
 - [x] root `README.md`
-- [ ] first `git push` to origin (blocked on you fixing `gh auth`/git credentials, and on your go-ahead — see chat)
+- [x] first `git push` to origin (the git credential-store token worked even though `gh auth` is still broken separately)
 
 ## Part 1 — Core Essence (`packages/core`)
 
