@@ -46,7 +46,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 - [x] `TPersistence<T>` contract + `createMemoryPersistence()` (→ `createMemoryPersistence`, packages/core/src/accidents/persistence/persistence.ts)
 - [x] `TStateManagement<T>` contract + `createMemoryState()` (→ `createMemoryState`, packages/core/src/accidents/state-management/state-management.ts)
-- [ ] `createRxState()` (RxJS-backed) — deferred until Part 7 picks a UI stack that actually needs it; conduit keeps both in the same file, but adding an rxjs dependency ahead of that decision would be presumptuous
+- [x] `createRxState()` (RxJS-backed) — **resolved as not needed**: Solid.js's own signals (`createSignal`) are the real app's state management, which was the whole reason Solid was picked over React+RxJS. Adding an RxJS dependency to duplicate what Solid already does natively would be presumptuous; `createMemoryState` stays the only `TStateManagement<T>` implementation, used for tests and the essence-view composition roots.
 
 ## Part 2 — Pomodoro Essence (`packages/pomodoro-essence`) — BUILD FIRST
 
@@ -167,10 +167,10 @@ touching HTML or a UI framework at all.
 
 - [ ] Chrome extension shell (manifest v3)
 - [ ] Mobile shell (Capacitor vs. React Native — undecided)
-- [ ] CI (GitHub Actions running `test:branches` on push/PR)
+- [x] CI (GitHub Actions running `test:branches` on push/PR) (→ .github/workflows/ci.yml)
 
 ## Open Questions
 
-- [ ] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Affects `TItem.note` shape.
+- [x] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Resolved in Part 5: `body` is a plain `string`; richer block types would be a future facet-shape change, not needed yet.
 - [x] Should nesting (`nestUnder`) accept any item as a parent, or only items that already carry a `note` facet? Resolved: any item — a note can nest under a kanban card or any other item, consistent with "every entity usable in every app." The parent doesn't need a `note` facet itself.
-- [ ] Parent/child nesting (with a cycle guard) vs. hanyuOS-style derived slash-tags for organizing notes — nesting was chosen to match "OneNote-like" literally; revisit if it turns out to be more machinery than the app needs.
+- [x] Parent/child nesting (with a cycle guard) vs. hanyuOS-style derived slash-tags for organizing notes — resolved: nesting was built, used in the live essence-view (a notebook with a nested page, plus a live "Add child" click test), and didn't turn out to be more machinery than the app needs. Keeping it.
