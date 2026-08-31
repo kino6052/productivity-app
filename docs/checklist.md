@@ -69,7 +69,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 - [x] package scaffold only this milestone (→ packages/calendar-essence/package.json)
 - [x] `scheduleItem(state, itemId, start, end)` (→ `scheduleItem`, packages/calendar-essence/src/essence/schedule-item.ts)
-- [ ] `unscheduleItem(state, itemId)`
+- [x] `unscheduleItem(state, itemId)` (→ `unscheduleItem`, packages/calendar-essence/src/essence/unschedule-item.ts)
 - [ ] `selectItemsOnDay(state, day)`
 - [ ] `selectItemsInRange(state, start, end)`
 
