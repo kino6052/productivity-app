@@ -142,7 +142,8 @@ Essence-view render functions now exist for all four mini-apps.
 
 - [x] `compilePomodoroViewModel(state, getState, setState)` — per-item start action (presence-gated), active item's session sub-view-model (phase/remaining labels, presence-gated pause/resume). Tests use `createMemoryState` as the DI harness (conduit's `compose-app.test.ts` pattern) and assert both the returned tree *and* that clicking an action genuinely drives the real essence function via `setState` (→ `compilePomodoroViewModel`, packages/app/src/view-models/pomodoro-view-model.ts)
 - [x] `compileKanbanViewModel(state, getState, setState)` — inbox + fixed columns, each card carrying move buttons only for columns it isn't already in (→ `compileKanbanViewModel`, packages/app/src/view-models/kanban-view-model.ts)
-- [ ] view-model compilers for calendar, notes
+- [x] `compileCalendarViewModel(state, day, getState, setState)` — schedule/unschedule actions, presence-gated (→ `compileCalendarViewModel`, packages/app/src/view-models/calendar-view-model.ts)
+- [ ] view-model compiler for notes
 
 - [x] `index.essence.ts` wires all four render functions as switchable views (pomodoro/kanban/calendar/notes) over **one shared state object** — the direct, clickable proof of the shared-entity architecture. Added `move-item`, `schedule-item`/`unschedule-item`, and `add-child` (chains `addItem` + `nestUnder`) click handlers, plus a `reference-day.ts` fixed date for the calendar grounding tool.
 - [x] Added an "One item, usable everywhere" named state (→ `states.ts`) and **verified live** via the Browser tool: the same item, with a note + kanban + calendar facet, correctly appears in all four views; clicking "Move to done" in kanban, "Add child" in notes, and switching views all worked exactly as expected against the real DOM.
