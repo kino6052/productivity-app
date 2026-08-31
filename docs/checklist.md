@@ -211,8 +211,9 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
   tested the same way as the other four) — lists projects, a create-project
   form, click-to-select; a "back to projects" control once inside one.
 
-- [ ] `TItem.projectId` + `TProjectFacet` added to core
-- [ ] `createProject`, `assignToProject`, `selectProjects`, `selectItemsInProject`
+- [x] `TItem.projectId` + `TProjectFacet` added to core (→ `TProjectFacet`, `TItem.projectId`, packages/core/src/essence/state.ts)
+- [x] `createProject(state, title)` (→ `createProject`, packages/projects-essence/src/essence/create-project.ts)
+- [ ] `assignToProject`, `selectProjects`, `selectItemsInProject`
 - [ ] `compileProjectSelectorViewModel` + `ProjectSelectorView.tsx`
 - [ ] Wire project scoping into `App.tsx` for all four mini-app views
 - [ ] Existing create-item actions tag the new item with the active `projectId`
