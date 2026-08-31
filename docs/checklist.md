@@ -115,12 +115,24 @@ code or glue — `packages/app` was scaffolded here specifically as the one
 package allowed to depend on every mini-app essence (it doubles as where
 Part 7's composition roots will live).
 
-## Part 7 — Composition Roots — deferred until essence is solid
+## Part 7 — Composition Roots
 
-- [ ] `index.essence.ts` — essence only, no framework
+UI framework decided: **Solid.js** for the real app (no virtual DOM,
+fine-grained signals, React-like API) — chosen specifically for a simpler
+rendering model than React while keeping conduit's essence/accidents split.
+`createRxState` (Part 1a) stays deferred since Solid's own signals likely
+replace what RxJS was doing in conduit's real app; revisit once the real
+Solid composition root needs shared reactive state across components.
+
+Building framework-free first (conduit's phase 1), starting with Pomodoro:
+
+- [x] `formatDuration(totalSeconds)` (→ `formatDuration`, packages/app/src/accidents/view/essence/format-duration.ts)
+- [x] `renderPomodoro(state)` — item list, start/pause/resume controls, completed counts (→ `renderPomodoro`, packages/app/src/accidents/view/essence/pomodoro.ts)
+- [ ] `index.essence.ts` — essence only, no framework, wired to `renderPomodoro`
+- [ ] `states.ts` — named states for the essence-view grounding tool
+- [ ] essence-view render functions for kanban, calendar, notes
 - [ ] `index.essential-dependencies.ts` — real logic, in-memory adapters
-- [ ] `accidents/view/essence` — framework-free HTML grounding tool + `states.ts`
-- [ ] `index.ts` — real app (UI framework not chosen yet)
+- [ ] `index.ts` — real Solid app
 
 ## Part 8 — Real Accidents — deferred
 
