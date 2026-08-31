@@ -29,7 +29,6 @@ describe("compileCalendarViewModel", () => {
 
   it("onScheduleClick actually schedules the item on the given day via setState", () => {
     const state = addItem(createInitialState(), "Write report");
-    const itemId = state.items[0].id;
     const memory = createMemoryState(state);
     const vm = compileCalendarViewModel(state, day, memory.getState, memory.setState);
 

@@ -27,7 +27,6 @@ describe("compileKanbanViewModel", () => {
 
   it("clicking a move button actually moves the item via setState", () => {
     const state = addItem(createInitialState(), "Write report");
-    const itemId = state.items[0].id;
     const memory = createMemoryState(state);
     const vm = compileKanbanViewModel(state, memory.getState, memory.setState);
 

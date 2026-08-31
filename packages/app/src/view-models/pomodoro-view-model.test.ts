@@ -39,7 +39,6 @@ describe("compilePomodoroViewModel", () => {
 
   it("gives the active item no start action, and a running session view-model", () => {
     const state = addItem(createInitialPomodoroState(), "Write report");
-    const itemId = state.items[0].id;
     const memory = createMemoryState(state);
     compilePomodoroViewModel(state, memory.getState, memory.setState).items[0].onStartClick!();
 
