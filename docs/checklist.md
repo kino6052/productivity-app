@@ -43,7 +43,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 ## Part 1a — Core Accidents (generic ports)
 
-- [ ] `TPersistence<T>` contract + `createMemoryPersistence()`
+- [x] `TPersistence<T>` contract + `createMemoryPersistence()` (→ `createMemoryPersistence`, packages/core/src/accidents/persistence/persistence.ts)
 - [ ] `TStateManagement<T>` contract + `createMemoryState()` (deferred until a composition root needs it)
 
 ## Part 2 — Pomodoro Essence (`packages/pomodoro-essence`) — BUILD FIRST
