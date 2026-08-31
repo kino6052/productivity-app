@@ -19,14 +19,15 @@ the calendar, a calendar event can be timed with a pomodoro, etc.
 
 ## Part 0 — Repo & Tooling (infra/accidents)
 
-- [ ] git repo initialized, remote set to `https://github.com/kino6052/productivity-app`
-- [ ] root `package.json` with bun workspaces (`packages/*`)
-- [ ] `tsconfig.base.json`
-- [ ] root `vitest.config.mts` (`bun:test` alias, istanbul coverage, exclude list)
-- [ ] `scripts/branch-coverage.mjs` ported from conduit (100% branch gate)
-- [ ] `.gitignore`
-- [ ] `docs/conventions.md` (condensed essence/accidents + TDD rules for this repo)
-- [ ] root `README.md`
+- [x] git repo initialized, remote set to `https://github.com/kino6052/productivity-app` (→ local commits made; not yet pushed, see below)
+- [x] root `package.json` with bun workspaces (`packages/*`)
+- [x] `tsconfig.base.json`
+- [x] root `vitest.config.mts` (`bun:test` alias, istanbul coverage, exclude list)
+- [x] `scripts/branch-coverage.mjs` ported from conduit (100% branch gate)
+- [x] `.gitignore`
+- [x] `docs/conventions.md` (condensed essence/accidents + TDD rules for this repo)
+- [x] root `README.md`
+- [ ] first `git push` to origin (blocked on you fixing `gh auth`/git credentials, and on your go-ahead — see chat)
 
 ## Part 1 — Core Essence (`packages/core`)
 
@@ -58,7 +59,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 ## Part 3 — Kanban Essence (`packages/kanban-essence`) — deferred
 
-- [ ] package scaffold only this milestone
+- [x] package scaffold only this milestone (→ packages/kanban-essence/package.json)
 - [ ] `moveItem(state, itemId, toColumn)`
 - [ ] `reorderItem(state, itemId, toIndex)`
 - [ ] `selectItemsByColumn(state, column)`
@@ -66,7 +67,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 ## Part 4 — Calendar Essence (`packages/calendar-essence`) — deferred
 
-- [ ] package scaffold only this milestone
+- [x] package scaffold only this milestone (→ packages/calendar-essence/package.json)
 - [ ] `scheduleItem(state, itemId, start, end)`
 - [ ] `unscheduleItem(state, itemId)`
 - [ ] `selectItemsOnDay(state, day)`
@@ -88,7 +89,7 @@ actual "OneNote-like" ask. Worth remembering slash-tags as a simpler
 alternative if `parentId` nesting (and its cycle guard) proves more
 complexity than the app needs — see Open Questions.
 
-- [ ] package scaffold only this milestone
+- [x] package scaffold only this milestone (→ packages/notes-essence/package.json)
 - [ ] `addNote(state, itemId, body)` — attaches/updates the note facet on an existing item
 - [ ] `nestUnder(state, itemId, parentId)` — sets `note.parentId`
 - [ ] `moveOutOfParent(state, itemId)` — clears `parentId` (promotes to a root-level notebook)
@@ -116,8 +117,9 @@ this is the actual proof of "every entity usable in every app."
 
 ## Part 8 — Real Accidents — deferred
 
+- [x] Firebase config stashed, not wired up (→ `firebaseConfig`, packages/adapters-firebase/src/firebase-config.ts)
 - [ ] `persistence-local-storage.ts`
-- [ ] `persistence-firebase.ts` (config stashed at `packages/adapters-firebase/src/firebase-config.ts`)
+- [ ] `persistence-firebase.ts` (wires the stashed config into a `TPersistence<T>` adapter)
 - [ ] auth (explicitly out of scope for this milestone)
 
 ## Part 9 — Packaging — future
