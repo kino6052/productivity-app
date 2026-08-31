@@ -53,8 +53,8 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 - [x] `tick(state)` — decrements remaining time; reaching zero flips phase (work ↔ break) and completes the session on work→break (→ `tick`, packages/pomodoro-essence/src/essence/tick.ts)
 - [x] `pauseSession(state)` / `resumeSession(state)` (→ `pauseSession`, `resumeSession`, packages/pomodoro-essence/src/essence/pause-resume.ts)
 - [x] `completeSession(state, itemId)` — increments the item's `pomodoro.completedCount` (→ `completeSession`, packages/pomodoro-essence/src/essence/complete-session.ts)
-- [ ] `selectActiveSession(state)`
-- [ ] `selectItemsWithPomodoro(state)`
+- [x] `selectActiveSession(state)` (→ `selectActiveSession`, packages/pomodoro-essence/src/essence/selectors.ts)
+- [x] `selectItemsWithPomodoro(state)` (→ `selectItemsWithPomodoro`, packages/pomodoro-essence/src/essence/selectors.ts)
 
 ## Part 3 — Kanban Essence (`packages/kanban-essence`) — deferred
 
