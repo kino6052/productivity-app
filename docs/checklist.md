@@ -34,7 +34,7 @@ the calendar, a calendar event can be timed with a pomodoro, etc.
 Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 - [x] `TState` type (→ `TState`, packages/core/src/essence/state.ts)
-- [x] `TItem` type: `id`, `title`, `createdAt` (→ `TItem`, packages/core/src/essence/state.ts) + optional facets `pomodoro` (→ `TPomodoroFacet`, packages/core/src/essence/state.ts), `kanban`, `calendar`, `note` (remaining three added as their mini app's TDD requires them)
+- [x] `TItem` type: `id`, `title`, `createdAt` (→ `TItem`, packages/core/src/essence/state.ts) + optional facets `pomodoro` (→ `TPomodoroFacet`), `kanban` (→ `TKanbanFacet`, both packages/core/src/essence/state.ts), `calendar`, `note` (remaining two added as their mini app's TDD requires them)
 - [x] `createInitialState()` (→ `createInitialState`, packages/core/src/essence/state.ts)
 - [x] `addItem(state, title)` (→ `addItem`, packages/core/src/essence/item.ts)
 - [x] `renameItem(state, id, title)` (→ `renameItem`, packages/core/src/essence/rename-item.ts)
@@ -60,7 +60,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 ## Part 3 — Kanban Essence (`packages/kanban-essence`) — deferred
 
 - [x] package scaffold only this milestone (→ packages/kanban-essence/package.json)
-- [ ] `moveItem(state, itemId, toColumn)`
+- [x] `moveItem(state, itemId, toColumn)` — appends the item to the end of the destination column (→ `moveItem`, packages/kanban-essence/src/essence/move-item.ts)
 - [ ] `reorderItem(state, itemId, toIndex)`
 - [ ] `selectItemsByColumn(state, column)`
 - [ ] `selectColumns(state)`
