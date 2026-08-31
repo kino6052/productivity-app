@@ -222,11 +222,9 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 - [x] The top-level "Add item" form and notes' create actions tag new items with the active `projectId` (via `assignToProject`)
 - [x] **Verified live**: created two projects ("Website redesign", "Personal errands"), added an item to one and a note to the other, and confirmed neither leaked into the other's Pomodoro, Kanban (same mechanism), Calendar (same mechanism), or Notes view — genuine isolation, not just code review.
 
-Part 10 (Projects) is functionally complete for this pass.
-
-- [ ] Wire project scoping into `App.tsx` for all four mini-app views
 - [x] `onAddChild` inherits its parent's `projectId` automatically (no explicit parameter needed — a child belongs to whatever project its parent already does); `onCreateRootNote` takes `projectId` explicitly since a root note has no parent to inherit one from. `compileNotesViewModel` gained an optional `projectId` parameter threading this through (→ packages/app/src/view-models/notes-view-model.ts)
-- [ ] Verified live
+
+Part 10 (Projects) is functionally complete for this pass.
 
 ## Part 11 — Context Menu (new, requested — not yet designed)
 
