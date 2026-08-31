@@ -33,7 +33,7 @@ the calendar, a calendar event can be timed with a pomodoro, etc.
 Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 
 - [x] `TState` type (→ `TState`, packages/core/src/essence/state.ts)
-- [ ] `TItem` type: `id`, `title`, `createdAt` (→ `TItem`, packages/core/src/essence/state.ts) + optional facets `pomodoro`, `kanban`, `calendar`, `note` (added as each mini app's TDD requires them)
+- [x] `TItem` type: `id`, `title`, `createdAt` (→ `TItem`, packages/core/src/essence/state.ts) + optional facets `pomodoro` (→ `TPomodoroFacet`, packages/core/src/essence/state.ts), `kanban`, `calendar`, `note` (remaining three added as their mini app's TDD requires them)
 - [x] `createInitialState()` (→ `createInitialState`, packages/core/src/essence/state.ts)
 - [x] `addItem(state, title)` (→ `addItem`, packages/core/src/essence/item.ts)
 - [x] `renameItem(state, id, title)` (→ `renameItem`, packages/core/src/essence/rename-item.ts)
@@ -52,7 +52,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 - [x] `startSession(state, itemId)` — attaches an active session; rejects starting a second one (→ `startSession`, packages/pomodoro-essence/src/essence/start-session.ts)
 - [ ] `tick(state)` — decrements remaining time; reaching zero flips phase (work ↔ break)
 - [ ] `pauseSession(state)` / `resumeSession(state)`
-- [ ] `completeSession(state)` — increments the item's `pomodoro.completedCount`
+- [x] `completeSession(state, itemId)` — increments the item's `pomodoro.completedCount` (→ `completeSession`, packages/pomodoro-essence/src/essence/complete-session.ts)
 - [ ] `selectActiveSession(state)`
 - [ ] `selectItemsWithPomodoro(state)`
 
