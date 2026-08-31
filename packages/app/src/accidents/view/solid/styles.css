@@ -33,6 +33,20 @@ body {
   padding: 24px 16px 48px;
 }
 
+.back-button {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.back-button:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
 /* Add-item form */
 .add-item-form {
   display: flex;

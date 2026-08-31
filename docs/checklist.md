@@ -172,6 +172,7 @@ touching HTML or a UI framework at all.
 
 ## Part 9 — Packaging — future
 
+- [x] **Confirmed constraint (requested): no backend server, ever, in any packaged form.** Already true by construction, not something to newly build: every `TPersistence<T>` adapter talks directly from the client — `createMemoryPersistence`/`createLocalStoragePersistence` are pure client-side, and `createFirebasePersistence` uses the Firebase **client** SDK talking directly to Google's managed Firestore, not a server we wrote or run. `scripts/serve-essence-view.ts` and Vite's dev server are build/dev-time tools only — a packaged Chrome extension or mobile build ships static assets and needs neither at runtime. Worth re-checking against this constraint specifically once the extension/mobile shells below are built.
 - [ ] Chrome extension shell (manifest v3)
 - [ ] Mobile shell (Capacitor vs. React Native — undecided)
 - [x] CI (GitHub Actions running `test:branches` on push/PR) (→ .github/workflows/ci.yml)
@@ -216,7 +217,12 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 - [x] `assignToProject(state, itemId, projectId)` (→ `assignToProject`, packages/projects-essence/src/essence/assign-to-project.ts)
 - [x] `selectProjects(state)` / `selectItemsInProject(state, projectId)` (→ `selectProjects`, `selectItemsInProject`, packages/projects-essence/src/essence/selectors.ts)
 - [x] `compileProjectSelectorViewModel(state, getState, setState)` (→ `compileProjectSelectorViewModel`, packages/app/src/view-models/project-selector-view-model.ts)
-- [ ] `ProjectSelectorView.tsx`
+- [x] `ProjectSelectorView.tsx` — lists projects, create-project form, click-to-select via an `onSelectProject` callback prop (→ packages/app/src/accidents/view/solid/ProjectSelectorView.tsx)
+- [x] Wired project scoping into `App.tsx`: which project is selected is local Solid navigation state (a signal, same treatment as which mini-app tab is active), not essence. A `scopedState()` accessor filters `state().items` by `projectId` and is passed as the *read* argument into each `compileXViewModel`, while `getState`/`setState` stay the full, unscoped pair (per Part 10's design above) — no changes needed to kanban/calendar/notes/pomodoro-essence at all. A "← Projects" back button clears the selection.
+- [x] The top-level "Add item" form and notes' create actions tag new items with the active `projectId` (via `assignToProject`)
+- [x] **Verified live**: created two projects ("Website redesign", "Personal errands"), added an item to one and a note to the other, and confirmed neither leaked into the other's Pomodoro, Kanban (same mechanism), Calendar (same mechanism), or Notes view — genuine isolation, not just code review.
+
+Part 10 (Projects) is functionally complete for this pass.
 - [ ] Wire project scoping into `App.tsx` for all four mini-app views
 - [x] `onAddChild` inherits its parent's `projectId` automatically (no explicit parameter needed — a child belongs to whatever project its parent already does); `onCreateRootNote` takes `projectId` explicitly since a root note has no parent to inherit one from. `compileNotesViewModel` gained an optional `projectId` parameter threading this through (→ packages/app/src/view-models/notes-view-model.ts)
 - [ ] Verified live
