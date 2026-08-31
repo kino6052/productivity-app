@@ -4,7 +4,14 @@
   "private": true,
   "description": "Essence-first collection of interconnected mini apps (pomodoro, kanban, calendar, notes) over one shared entity.",
   "workspaces": [
-    "packages/*"
+    "packages/core",
+    "packages/pomodoro-essence",
+    "packages/kanban-essence",
+    "packages/calendar-essence",
+    "packages/notes-essence",
+    "packages/projects-essence",
+    "packages/adapters-firebase",
+    "packages/app"
   ],
   "scripts": {
     "test": "bun test",
@@ -12,7 +19,8 @@
     "test:branches": "node scripts/branch-coverage.mjs",
     "essence-view": "bun scripts/serve-essence-view.ts",
     "mobile:sync": "bun scripts/sync-www.ts",
-    "extension:package": "bun scripts/package-extension.ts"
+    "extension:package": "bun scripts/package-extension.ts",
+    "mobile:package-android": "bun scripts/package-mobile-android.ts"
   },
   "devDependencies": {
     "@types/archiver": "^8.0.0",

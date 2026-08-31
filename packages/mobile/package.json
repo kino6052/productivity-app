@@ -1,0 +1,11 @@
+{
+  "name": "@productivity-app/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "cordova-android": "^15.1.0"
+  },
+  "cordova": {
+    "platforms": ["android"]
+  }
+}

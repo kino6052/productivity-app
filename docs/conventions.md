@@ -79,6 +79,23 @@ essence-view grounding tool + named states), not by clicking through it —
 browser automation is unreliable as a verification method; render output is
 not.
 
+## Workspace membership is an explicit list, not a glob
+
+Root `package.json`'s `"workspaces"` enumerates each TS/JS package by name
+rather than globbing `packages/*`. `packages/mobile` (the Cordova shell)
+deliberately isn't listed: it has its own `package.json` (for
+`cordova-android`) but needs none of bun's `@productivity-app/*` linking,
+and including it in the glob caused a real, reproducible failure —
+Cordova's `platform add` shells out to plain `npm install` internally,
+and npm 7+'s workspace auto-detection walks up from wherever it's invoked
+to find the nearest ancestor `"workspaces"` field; once it found ours, it
+tried to resolve every workspace member's dependencies, including
+sibling packages' `workspace:*` specifiers (a protocol only bun/pnpm
+understand), and failed outright. Excluding `packages/mobile` from the
+list — not from a `.npmrc` override, which npm explicitly ignores outside
+the true root — sidesteps this entirely. Adding a new mini-app-essence
+package means adding it to this list, not just creating the directory.
+
 ## Living checklist
 
 `docs/checklist.md` is the source of truth for what's built. An item is

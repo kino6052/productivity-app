@@ -8,12 +8,13 @@
         kino6052
     </author>
     <!--
-        www/ is not a separate build -- it's the exact same Vite output as
+        www/ is not a separate build; it is the exact same Vite output as
         the web app and the Chrome extension (packages/app/dist), synced in
-        by scripts/sync-www.sh. Same "no backend server" guarantee applies
+        by scripts/sync-www.ts. Same "no backend server" guarantee applies
         here too: Cordova's WebView loads these files directly off disk, and
-        every TPersistence<T> adapter already talks straight from the
-        client (docs/checklist.md, Part 9).
+        every TPersistence adapter already talks straight from the client
+        (docs/checklist.md, Part 9). Note for future edits: XML comments
+        may not contain a literal double hyphen anywhere in their text.
     -->
     <content src="index.html" />
     <access origin="*" />
