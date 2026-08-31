@@ -134,7 +134,9 @@ Building framework-free first (conduit's phase 1), starting with Pomodoro:
 - [x] `scripts/serve-essence-view.ts` + `index.html`, ported from conduit, run via `bun run essence-view`
 - [x] `renderKanban(state)` — fixed todo/doing/done columns + an inbox for unassigned items, move buttons per item (→ `renderKanban`, packages/app/src/accidents/view/essence/kanban.ts)
 - [x] `renderCalendar(state, day)` — items scheduled that day with unschedule buttons, unscheduled items with a schedule-today button (→ `renderCalendar`, packages/app/src/accidents/view/essence/calendar.ts)
-- [ ] essence-view render function for notes
+- [x] `renderNotes(state)` — recursive tree render via `selectRootNotes`/`selectNoteTree`, add-child button per note (→ `renderNotes`, packages/app/src/accidents/view/essence/notes.ts)
+
+Essence-view render functions now exist for all four mini-apps.
 - [ ] `index.essential-dependencies.ts` — real logic, in-memory adapters
 - [ ] `index.ts` — real Solid app
 
