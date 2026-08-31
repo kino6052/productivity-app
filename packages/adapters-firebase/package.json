@@ -3,5 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/firebase-config.ts"
+  "main": "src/firebase-config.ts",
+  "dependencies": {
+    "@productivity-app/core": "workspace:*",
+    "firebase": "^11.0.0"
+  }
 }

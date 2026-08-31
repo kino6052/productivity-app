@@ -27,6 +27,8 @@ export default defineConfig({
         // round-tripping) lives in json-codec.ts instead, which stays
         // covered.
         "packages/core/src/accidents/persistence/persistence-local-storage.ts",
+        // Real network IO (Firestore) -- same category as the line above.
+        "packages/adapters-firebase/src/persistence-firebase.ts",
       ],
       reporter: ["text", "json-summary"],
     },

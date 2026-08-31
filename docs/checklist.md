@@ -126,7 +126,7 @@ Part 7's composition roots will live).
 - [x] Firebase config stashed, not wired up (→ `firebaseConfig`, packages/adapters-firebase/src/firebase-config.ts)
 - [x] `encode`/`decode` — Date-safe JSON codec, needed because `TState` holds real `Date` instances that a naive `JSON.stringify`/`parse` would corrupt into strings (→ `encode`, `decode`, packages/core/src/accidents/persistence/json-codec.ts)
 - [x] `persistence-local-storage.ts` — real browser IO, excluded from the coverage gate like conduit's navigation-hash.ts (→ `createLocalStoragePersistence`, packages/core/src/accidents/persistence/persistence-local-storage.ts)
-- [ ] `persistence-firebase.ts` (wires the stashed config into a `TPersistence<T>` adapter)
+- [x] `persistence-firebase.ts` — Firestore-backed, cache-then-sync (`onSnapshot` keeps a cache that `load()` reads synchronously; documented cold-start race is an accepted limitation, not hidden). Real network IO, excluded from the coverage gate. **Operational note: needs Firestore security rules on the `productivity-1be47` project allowing unauthenticated read/write on this document before it will actually work** — that's a Firebase Console setting, not something committed here (→ `createFirebasePersistence`, packages/adapters-firebase/src/persistence-firebase.ts)
 - [ ] auth (explicitly out of scope for this milestone)
 
 ## Part 9 — Packaging — future
