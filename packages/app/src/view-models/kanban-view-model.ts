@@ -6,14 +6,18 @@ import { selectItemsByColumn } from "@productivity-app/kanban-essence/src/essenc
 // is column-agnostic, this is just this view's illustrative set.
 const COLUMNS = ["todo", "doing", "done"];
 
-export type TGetState = () => TState;
-export type TSetState = (next: TState) => void;
+// Generic over S -- so this compiles against a composed state like
+// pomodoro-essence's TPomodoroState too, sharing the same getState/setState
+// pair the composition root's other three view-models use (same reasoning
+// as the essence layer's own <S extends TState> fix; see core/item.ts).
+export type TGetState<S extends TState> = () => S;
+export type TSetState<S extends TState> = (next: S) => void;
 
-export const onMoveItem = (
+export const onMoveItem = <S extends TState>(
   itemId: string,
   column: string,
-  getState: TGetState,
-  setState: TSetState,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
 ): void => {
   setState(moveItem(getState(), itemId, column));
 };
@@ -39,7 +43,11 @@ export type TKanbanViewModel = {
   columns: TKanbanColumnViewModel[];
 };
 
-const compileCardViewModel = (item: TItem, getState: TGetState, setState: TSetState): TKanbanCardViewModel => ({
+const compileCardViewModel = <S extends TState>(
+  item: TItem,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
+): TKanbanCardViewModel => ({
   id: item.id,
   title: item.title,
   moveButtons: COLUMNS.filter((column) => item.kanban?.column !== column).map((column) => ({
@@ -48,10 +56,10 @@ const compileCardViewModel = (item: TItem, getState: TGetState, setState: TSetSt
   })),
 });
 
-export const compileKanbanViewModel = (
-  state: TState,
-  getState: TGetState,
-  setState: TSetState,
+export const compileKanbanViewModel = <S extends TState>(
+  state: S,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
 ): TKanbanViewModel => ({
   inbox: state.items
     .filter((item) => item.kanban === undefined)

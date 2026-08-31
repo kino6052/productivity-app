@@ -20,6 +20,7 @@
   },
   "trustedDependencies": [
     "@firebase/util",
+    "esbuild",
     "protobufjs"
   ]
 }

@@ -152,8 +152,15 @@ touching HTML or a UI framework at all.
 - [x] `index.essence.ts` wires all four render functions as switchable views (pomodoro/kanban/calendar/notes) over **one shared state object** — the direct, clickable proof of the shared-entity architecture. Added `move-item`, `schedule-item`/`unschedule-item`, and `add-child` (chains `addItem` + `nestUnder`) click handlers, plus a `reference-day.ts` fixed date for the calendar grounding tool.
 - [x] Added an "One item, usable everywhere" named state (→ `states.ts`) and **verified live** via the Browser tool: the same item, with a note + kanban + calendar facet, correctly appears in all four views; clicking "Move to done" in kanban, "Add child" in notes, and switching views all worked exactly as expected against the real DOM.
 - [x] Generic-over-`<S extends TState>` refactor: `addItem`, `renameItem`, `removeItem` (core), `moveItem`, `reorderItem` (kanban), `scheduleItem`, `unscheduleItem` (calendar), `addNote`, `nestUnder`, `moveOutOfParent` (notes) — a real type-safety gap surfaced by `tsc --noEmit` (never run across the whole app package until this point): these functions were typed as `(state: TState) => TState`, so calling them on a `TPomodoroState` value silently widened the type back to `TState`, losing `activeSession` for any later pomodoro-essence call. Fixed by making them generic so the caller's wrapper type flows through unchanged, rather than requiring a manual `{...state, ...result}` merge at every call site. No behavior change — all 98 tests and 100% branch coverage held throughout.
-- [ ] `index.essential-dependencies.ts` — real logic, in-memory adapters
-- [ ] `index.ts` — real Solid app
+- [x] `App.tsx` — the real Solid composed page: switches between `PomodoroView`/`KanbanView`/`CalendarView`/`NotesView` (all presentational, consuming the view-model tier directly — no HTML strings, no essence knowledge), plus a top-level "Add item" form (the one place a brand-new item gets created; every mini-app view only ever acts on existing items) (→ packages/app/src/accidents/view/solid/App.tsx + `PomodoroView.tsx`/`KanbanView.tsx`/`CalendarView.tsx`/`NotesView.tsx`)
+- [x] `index.essential-dependencies.tsx` — same `App`, wired to `createMemoryPersistence` (→ `createEssentialDependenciesApp`, packages/app/src/index.essential-dependencies.tsx)
+- [x] `index.tsx` — same `App`, wired to `createLocalStoragePersistence` (→ `createRealApp`, packages/app/src/index.tsx), mounted via `main.tsx` and Vite (`bun run dev` in `packages/app`, or the `app` preview config)
+- [x] **Verified live** via the Browser tool: added a real item, started its pomodoro session, confirmed Solid's fine-grained reactivity updates the DOM correctly with no manual `createMemo` needed (Solid's JSX compiler wraps prop expressions in getters automatically), confirmed the same item appears correctly in the kanban view, and — the real proof of `index.tsx` vs. the essence-view/essential-deps tiers — did a genuine full-page reload and confirmed the running session survived via `localStorage`.
+- [x] Fixed a real environment issue hit while wiring this up: Vite's default host resolution bound `::1` (IPv6 loopback) only, which this environment's browser/curl couldn't reach ("Bad access" on connect) — fixed with an explicit `host: "127.0.0.1"` in `vite.config.ts`.
+- [x] Generalized `kanban-view-model.ts`/`calendar-view-model.ts`/`notes-view-model.ts`'s `TGetState`/`TSetState` to `<S extends TState>` (mirroring the essence-layer fix above) — needed because the composition root has one shared `TPomodoroState` signal that all four `compileXViewModel` calls share; without this, the same type-widening bug would have resurfaced one layer up. No behavior change, all existing tests passed unchanged.
+- [x] Real stylesheet (`accidents/view/solid/styles.css`) — styling is itself an accident (conduit's own "essential-ui" delivery is essence-view + a stylesheet, nothing else); wired semantic class names into all four presentational components. Verified live via screenshot: nav tabs, cards, kanban columns, notes tree indentation all render correctly, not just unstyled lists.
+- [x] Fixed a real gap found while live-testing: nothing was actually calling `tick()` on a clock — the timer showed `25:00` forever until manually re-triggered. Added a `setInterval`-driven `onMount`/`onCleanup` in `App.tsx` calling `tick()` once a second (safe to call unconditionally; `tick()` is already a documented no-op with no active/running session). **Verified live**: watched the displayed remaining time actually count down in real time across multiple checks.
+- [x] Fixed a real gap found while live-testing: `NotesView` had no way to create the *first* root note — `onAddChildClick` only ever nests under an existing note. Added `compileNotesViewModel`'s `onCreateRootNote(title)` (chains `addItem` + `addNote`, same idiom as `onAddChild`) and a "New notebook" form in `NotesView.tsx`.
 
 ## Part 8 — Real Accidents — deferred
 
@@ -168,6 +175,65 @@ touching HTML or a UI framework at all.
 - [ ] Chrome extension shell (manifest v3)
 - [ ] Mobile shell (Capacitor vs. React Native — undecided)
 - [x] CI (GitHub Actions running `test:branches` on push/PR) (→ .github/workflows/ci.yml)
+
+## Part 10 — Projects (new, requested — top-level container)
+
+The main view becomes a **project selector**; each project scopes its own
+pomodoro/kanban/calendar/notes. Design, not yet built:
+
+- A project **is an item** (consistent with the shared-entity model), marked
+  by a new empty-marker facet `project?: {}` on `TItem`.
+- A new cross-cutting field `TItem.projectId?: string` — orthogonal to
+  facets, since *any* item (whatever facets it carries) can belong to a
+  project. Not a facet itself; every mini-app's essence stays unaware of it.
+- `createProject(state, title)` — `addItem` + tag with the `project` facet,
+  same one-step-chain idiom as `onAddChild`.
+- `assignToProject(state, itemId, projectId)` — sets `projectId`.
+- `selectProjects(state)` — items carrying the `project` facet.
+- `selectItemsInProject(state, projectId)` — items whose `projectId` matches.
+- **Scoping approach for the four existing mini-app views, without touching
+  kanban/calendar/notes/pomodoro-essence at all**: pass a project-filtered
+  `state` (`{...state, items: state.items.filter(i => i.projectId === projectId)}`)
+  as the *read* argument into each `compileXViewModel`, while `getState`/
+  `setState` stay the full, unscoped pair — every essence action already
+  finds its target by item id and only touches that one item, so operating
+  against the full state is always safe. This avoids needing a "merge
+  scoped writes back into the full state" adapter entirely.
+- Every "create a new item" action (`App.tsx`'s top-level Add-item form,
+  `onAddChild`/`onCreateRootNote` in notes) needs to tag the new item with
+  the current `projectId` (via `assignToProject`) so it's actually visible
+  once scoped — an easy thing to silently get wrong.
+- `activeSession` (pomodoro) stays **global**, not per-project — one timer
+  running at a time regardless of which project you're viewing, matching
+  `startSession`'s existing "rejects a second concurrent session" rule.
+  Revisit only if per-project concurrent timers turn out to be wanted.
+- New `ProjectSelectorView` (+ its own `compileProjectSelectorViewModel`,
+  tested the same way as the other four) — lists projects, a create-project
+  form, click-to-select; a "back to projects" control once inside one.
+
+- [ ] `TItem.projectId` + `TProjectFacet` added to core
+- [ ] `createProject`, `assignToProject`, `selectProjects`, `selectItemsInProject`
+- [ ] `compileProjectSelectorViewModel` + `ProjectSelectorView.tsx`
+- [ ] Wire project scoping into `App.tsx` for all four mini-app views
+- [ ] Existing create-item actions tag the new item with the active `projectId`
+- [ ] Verified live
+
+## Part 11 — Context Menu (new, requested — not yet designed)
+
+A right-click (or long-press) context menu on items, for quick actions.
+Not yet designed: which actions belong on it (rename? delete? assign to
+project? per-facet shortcuts like "start pomodoro" from anywhere?), and
+whether it's one generic menu component parameterized by a list of
+actions (matching the view-model tier's own presence-gated-action style)
+or per-mini-app-view menus. Needs a scoping conversation before building —
+tracked here so it isn't lost, not started.
+
+- [ ] Decide the action set and whether delete exists yet (core has no
+      `removeItem`-triggering UI anywhere currently — worth resolving
+      alongside this, since a context menu is the natural place for it)
+- [ ] Design the menu as its own testable view-model tier item, same
+      pattern as the four mini-app compilers
+- [ ] Build + verify live
 
 ## Open Questions
 

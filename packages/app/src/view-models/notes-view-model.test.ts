@@ -44,4 +44,16 @@ describe("compileNotesViewModel", () => {
     expect(after.items).toHaveLength(2);
     expect(after.items[1].note?.parentId).toBe(notebookId);
   });
+
+  it("onCreateRootNote creates a brand-new root note via setState", () => {
+    const memory = createMemoryState(createInitialState());
+    const vm = compileNotesViewModel(createInitialState(), memory.getState, memory.setState);
+
+    vm.onCreateRootNote("My notebook");
+
+    const after = memory.getState();
+    expect(after.items).toHaveLength(1);
+    expect(after.items[0].title).toBe("My notebook");
+    expect(after.items[0].note).toEqual({ body: "", parentId: undefined });
+  });
 });

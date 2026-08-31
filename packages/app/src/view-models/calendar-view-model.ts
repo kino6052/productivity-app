@@ -3,19 +3,24 @@ import { scheduleItem } from "@productivity-app/calendar-essence/src/essence/sch
 import { unscheduleItem } from "@productivity-app/calendar-essence/src/essence/unschedule-item";
 import { selectItemsOnDay } from "@productivity-app/calendar-essence/src/essence/selectors";
 
-export type TGetState = () => TState;
-export type TSetState = (next: TState) => void;
+// Generic over S -- see kanban-view-model.ts for why.
+export type TGetState<S extends TState> = () => S;
+export type TSetState<S extends TState> = (next: S) => void;
 
-export const onScheduleItem = (
+export const onScheduleItem = <S extends TState>(
   itemId: string,
   day: Date,
-  getState: TGetState,
-  setState: TSetState,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
 ): void => {
   setState(scheduleItem(getState(), itemId, day, day));
 };
 
-export const onUnscheduleItem = (itemId: string, getState: TGetState, setState: TSetState): void => {
+export const onUnscheduleItem = <S extends TState>(
+  itemId: string,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
+): void => {
   setState(unscheduleItem(getState(), itemId));
 };
 
@@ -34,11 +39,11 @@ export type TCalendarViewModel = {
   unscheduled: TCalendarItemViewModel[];
 };
 
-export const compileCalendarViewModel = (
-  state: TState,
+export const compileCalendarViewModel = <S extends TState>(
+  state: S,
   day: Date,
-  getState: TGetState,
-  setState: TSetState,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
 ): TCalendarViewModel => {
   const compileScheduled = (item: TItem): TCalendarItemViewModel => ({
     id: item.id,

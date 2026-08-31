@@ -1,0 +1,282 @@
+/* Styling is an accident (conduit's "essential-ui": essence-view + a
+   stylesheet, nothing else) -- this file has zero knowledge of pomodoro,
+   kanban, calendar, or notes; it only ever styles generic class names the
+   components apply. */
+
+:root {
+  --color-bg: #f7f7fb;
+  --color-surface: #ffffff;
+  --color-border: #e2e2ea;
+  --color-text: #1f2430;
+  --color-text-muted: #6b7280;
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-danger: #dc2626;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(16, 24, 40, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+/* Add-item form */
+.add-item-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.add-item-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.add-item-form input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* Buttons, generally */
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  padding: 8px 14px;
+  background: var(--color-primary);
+  color: white;
+  transition: background-color 0.12s ease;
+}
+
+button:hover {
+  background: var(--color-primary-hover);
+}
+
+/* View nav (tabs) */
+.view-nav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0;
+}
+
+.view-nav button {
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 0;
+  padding: 8px 16px;
+  text-transform: capitalize;
+  border-bottom: 2px solid transparent;
+}
+
+.view-nav button:hover {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.view-nav button[aria-current="true"] {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Generic card list, shared by pomodoro/calendar/notes item rows */
+.item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.item-card__title {
+  flex: 1;
+  font-weight: 500;
+}
+
+.item-card__meta {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.item-card__session {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.item-card__phase {
+  text-transform: capitalize;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.item-card__remaining {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.item-card button.secondary,
+.item-card__session button {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.item-card button.secondary:hover,
+.item-card__session button:hover {
+  background: var(--color-bg);
+}
+
+/* Kanban board */
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  flex: 1 0 200px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.kanban-column h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.kanban-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.kanban-card__title {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.kanban-card__moves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.kanban-card__moves button {
+  font-size: 12px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.kanban-card__moves button:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* Calendar */
+.calendar-day-heading {
+  font-size: 16px;
+  color: var(--color-text-muted);
+  margin: 0 0 12px;
+}
+
+.calendar-section-heading {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 24px 0 10px;
+}
+
+/* Notes tree */
+.notes-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notes-tree .notes-tree {
+  margin-top: 8px;
+  margin-left: 20px;
+  padding-left: 16px;
+  border-left: 2px solid var(--color-border);
+}
+
+.note-node {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+}
+
+.note-node__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.note-node__title {
+  flex: 1;
+  font-weight: 500;
+}
+
+.note-node__row button {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.note-node__row button:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}

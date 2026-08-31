@@ -6,6 +6,12 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["scripts/serve-essence-view.ts"],
       "port": 5321
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["--cwd=packages/app", "run", "dev"],
+      "port": 5322
     }
   ]
 }
