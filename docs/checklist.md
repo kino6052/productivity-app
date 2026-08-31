@@ -92,12 +92,12 @@ complexity than the app needs — see Open Questions.
 - [x] package scaffold only this milestone (→ packages/notes-essence/package.json)
 - [x] `TNoteFacet` (`body`, `parentId`) added to `TItem` (→ `TNoteFacet`, packages/core/src/essence/state.ts) — resolves the "plain text for now" open question: `body` is a plain `string`
 - [x] `addNote(state, itemId, body)` — attaches/updates the note facet, preserving any existing `parentId` (→ `addNote`, packages/notes-essence/src/essence/add-note.ts)
-- [ ] `nestUnder(state, itemId, parentId)` — sets `note.parentId`
+- [x] `nestUnder(state, itemId, parentId)` — sets `note.parentId`, lazily creating an empty-body note facet if the item had none (→ `nestUnder`, packages/notes-essence/src/essence/nest-under.ts)
 - [ ] `moveOutOfParent(state, itemId)` — clears `parentId` (promotes to a root-level notebook)
 - [ ] `selectChildren(state, parentId)`
 - [ ] `selectRootNotes(state)` — note-faceted items with no parent
 - [ ] `selectNoteTree(state, rootId)` — full nested tree from a root
-- [ ] guard: `nestUnder` rejects creating a cycle (an item can't become its own ancestor)
+- [x] guard: `nestUnder` rejects creating a cycle (an item can't become its own ancestor) — built into `nestUnder` from the start rather than bolted on (→ `isSelfOrAncestor`, packages/notes-essence/src/essence/nest-under.ts)
 
 ## Part 6 — Cross-App Interconnection
 
@@ -132,5 +132,5 @@ this is the actual proof of "every entity usable in every app."
 ## Open Questions
 
 - [ ] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Affects `TItem.note` shape.
-- [ ] Should nesting (`nestUnder`) accept any item as a parent, or only items that already carry a `note` facet?
+- [x] Should nesting (`nestUnder`) accept any item as a parent, or only items that already carry a `note` facet? Resolved: any item — a note can nest under a kanban card or any other item, consistent with "every entity usable in every app." The parent doesn't need a `note` facet itself.
 - [ ] Parent/child nesting (with a cycle guard) vs. hanyuOS-style derived slash-tags for organizing notes — nesting was chosen to match "OneNote-like" literally; revisit if it turns out to be more machinery than the app needs.
