@@ -140,7 +140,7 @@ Essence-view render functions now exist for all four mini-apps.
 
 **View-model tier** (conduit's `view-model.ts`/`article-view-model.ts` pattern): typed object trees with bound action closures, computed from essence state — testable by asserting on the returned tree directly (structure, labels, presence/absence of optional callbacks), independent of HTML string matching. A separate, parallel tier alongside essence-view, same as conduit keeps its own essence-view and its React view-model independent of each other — this is what a real Solid component would eventually consume.
 
-- [x] `compilePomodoroViewModel(state, getState, setState)` — per-item start action (presence-gated), active item's session sub-view-model (phase/remaining labels, presence-gated pause/resume). Tests use `createMemoryState` as the DI harness (conduit's `compose-app.test.ts` pattern) and assert both the returned tree *and* that clicking an action genuinely drives the real essence function via `setState` (→ `compilePomodoroViewModel`, packages/app/src/view-models/pomodoro-view-model.ts)
+- [x] `compilePomodoroViewModel(state, getState, setState)` — per-item start action (presence-gated), active item's session sub-view-model (phase/remaining labels, presence-gated pause/resume). Tests use `createMemoryState` as the DI harness (conduit's `compose-app.test.ts` pattern) and assert both the returned tree _and_ that clicking an action genuinely drives the real essence function via `setState` (→ `compilePomodoroViewModel`, packages/app/src/view-models/pomodoro-view-model.ts)
 - [x] `compileKanbanViewModel(state, getState, setState)` — inbox + fixed columns, each card carrying move buttons only for columns it isn't already in (→ `compileKanbanViewModel`, packages/app/src/view-models/kanban-view-model.ts)
 - [x] `compileCalendarViewModel(state, day, getState, setState)` — schedule/unschedule actions, presence-gated (→ `compileCalendarViewModel`, packages/app/src/view-models/calendar-view-model.ts)
 - [x] `compileNotesViewModel(state, getState, setState)` — recursive tree, add-child action creates+nests a real new item via setState (→ `compileNotesViewModel`, packages/app/src/view-models/notes-view-model.ts)
@@ -160,7 +160,7 @@ touching HTML or a UI framework at all.
 - [x] Generalized `kanban-view-model.ts`/`calendar-view-model.ts`/`notes-view-model.ts`'s `TGetState`/`TSetState` to `<S extends TState>` (mirroring the essence-layer fix above) — needed because the composition root has one shared `TPomodoroState` signal that all four `compileXViewModel` calls share; without this, the same type-widening bug would have resurfaced one layer up. No behavior change, all existing tests passed unchanged.
 - [x] Real stylesheet (`accidents/view/solid/styles.css`) — styling is itself an accident (conduit's own "essential-ui" delivery is essence-view + a stylesheet, nothing else); wired semantic class names into all four presentational components. Verified live via screenshot: nav tabs, cards, kanban columns, notes tree indentation all render correctly, not just unstyled lists.
 - [x] Fixed a real gap found while live-testing: nothing was actually calling `tick()` on a clock — the timer showed `25:00` forever until manually re-triggered. Added a `setInterval`-driven `onMount`/`onCleanup` in `App.tsx` calling `tick()` once a second (safe to call unconditionally; `tick()` is already a documented no-op with no active/running session). **Verified live**: watched the displayed remaining time actually count down in real time across multiple checks.
-- [x] Fixed a real gap found while live-testing: `NotesView` had no way to create the *first* root note — `onAddChildClick` only ever nests under an existing note. Added `compileNotesViewModel`'s `onCreateRootNote(title)` (chains `addItem` + `addNote`, same idiom as `onAddChild`) and a "New notebook" form in `NotesView.tsx`.
+- [x] Fixed a real gap found while live-testing: `NotesView` had no way to create the _first_ root note — `onAddChildClick` only ever nests under an existing note. Added `compileNotesViewModel`'s `onCreateRootNote(title)` (chains `addItem` + `addNote`, same idiom as `onAddChild`) and a "New notebook" form in `NotesView.tsx`.
 
 ## Part 8 — Real Accidents — deferred
 
@@ -168,13 +168,13 @@ touching HTML or a UI framework at all.
 - [x] `encode`/`decode` — Date-safe JSON codec, needed because `TState` holds real `Date` instances that a naive `JSON.stringify`/`parse` would corrupt into strings (→ `encode`, `decode`, packages/core/src/accidents/persistence/json-codec.ts)
 - [x] `persistence-local-storage.ts` — real browser IO, excluded from the coverage gate like conduit's navigation-hash.ts (→ `createLocalStoragePersistence`, packages/core/src/accidents/persistence/persistence-local-storage.ts)
 - [x] `persistence-firebase.ts` — Firestore-backed, cache-then-sync (`onSnapshot` keeps a cache that `load()` reads synchronously; documented cold-start race is an accepted limitation, not hidden). Real network IO, excluded from the coverage gate. **Operational note: needs Firestore security rules on the `productivity-1be47` project allowing unauthenticated read/write on this document before it will actually work** — that's a Firebase Console setting, not something committed here (→ `createFirebasePersistence`, packages/adapters-firebase/src/persistence-firebase.ts)
-- [ ] auth (explicitly out of scope for this milestone)
+- [ ] no auth - we package clients with api keys
 
 ## Part 9 — Packaging — future
 
 - [x] **Confirmed constraint (requested): no backend server, ever, in any packaged form.** Already true by construction, not something to newly build: every `TPersistence<T>` adapter talks directly from the client — `createMemoryPersistence`/`createLocalStoragePersistence` are pure client-side, and `createFirebasePersistence` uses the Firebase **client** SDK talking directly to Google's managed Firestore, not a server we wrote or run. `scripts/serve-essence-view.ts` and Vite's dev server are build/dev-time tools only — a packaged Chrome extension or mobile build ships static assets and needs neither at runtime. Worth re-checking against this constraint specifically once the extension/mobile shells below are built.
-- [ ] Chrome extension shell (manifest v3)
-- [ ] Mobile shell (Capacitor vs. React Native — undecided)
+- [x] Chrome extension shell (manifest v3) — the same `packages/app` Vite build doubles as the extension: `public/manifest.json` (`action.default_popup: "index.html"`, no `permissions` needed since we use plain `localStorage`, not `chrome.storage`) gets copied verbatim into `dist/` by Vite; `base: "./"` in `vite.config.ts` makes the built `index.html`'s asset paths relative, resolving correctly from a `chrome-extension://` origin. **Verified structurally**: `bun run build` in `packages/app` produces a `dist/` with `manifest.json` + relative-path `index.html` + hashed assets, and the built JS contains no hardcoded dev-server URLs — ready to "Load unpacked." Not loaded into a real Chrome instance and clicked through in this pass (this environment's Browser tool is a sandboxed preview, not a real Chrome you can open `chrome://extensions` in).
+- [x] Mobile shell — **Apache Cordova** (a WebView wrapper around the same built web app, not a native rewrite — matches the "keep it simple" ask; Capacitor was floated first and superseded by this choice). `packages/mobile/config.xml` is the real Cordova config (app id, name, `content src="index.html"`); `scripts/sync-www.ts` copies `packages/app/dist` → `packages/mobile/www` (Cordova's WebView loads that directory directly, verified by actually running the script and inspecting the output — no separate mobile build). **Not done, and can't be from here**: `cordova platform add android`/`ios` and an actual native build need the Cordova CLI plus Android Studio/Xcode, neither installed in this environment — an operational step for you, same category as the Firestore security rules note above.
 - [x] CI (GitHub Actions running `test:branches` on push/PR) (→ .github/workflows/ci.yml)
 
 ## Part 10 — Projects (new, requested — top-level container)
@@ -185,7 +185,7 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 - A project **is an item** (consistent with the shared-entity model), marked
   by a new empty-marker facet `project?: {}` on `TItem`.
 - A new cross-cutting field `TItem.projectId?: string` — orthogonal to
-  facets, since *any* item (whatever facets it carries) can belong to a
+  facets, since _any_ item (whatever facets it carries) can belong to a
   project. Not a facet itself; every mini-app's essence stays unaware of it.
 - `createProject(state, title)` — `addItem` + tag with the `project` facet,
   same one-step-chain idiom as `onAddChild`.
@@ -195,7 +195,7 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 - **Scoping approach for the four existing mini-app views, without touching
   kanban/calendar/notes/pomodoro-essence at all**: pass a project-filtered
   `state` (`{...state, items: state.items.filter(i => i.projectId === projectId)}`)
-  as the *read* argument into each `compileXViewModel`, while `getState`/
+  as the _read_ argument into each `compileXViewModel`, while `getState`/
   `setState` stay the full, unscoped pair — every essence action already
   finds its target by item id and only touches that one item, so operating
   against the full state is always safe. This avoids needing a "merge
@@ -218,11 +218,12 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 - [x] `selectProjects(state)` / `selectItemsInProject(state, projectId)` (→ `selectProjects`, `selectItemsInProject`, packages/projects-essence/src/essence/selectors.ts)
 - [x] `compileProjectSelectorViewModel(state, getState, setState)` (→ `compileProjectSelectorViewModel`, packages/app/src/view-models/project-selector-view-model.ts)
 - [x] `ProjectSelectorView.tsx` — lists projects, create-project form, click-to-select via an `onSelectProject` callback prop (→ packages/app/src/accidents/view/solid/ProjectSelectorView.tsx)
-- [x] Wired project scoping into `App.tsx`: which project is selected is local Solid navigation state (a signal, same treatment as which mini-app tab is active), not essence. A `scopedState()` accessor filters `state().items` by `projectId` and is passed as the *read* argument into each `compileXViewModel`, while `getState`/`setState` stay the full, unscoped pair (per Part 10's design above) — no changes needed to kanban/calendar/notes/pomodoro-essence at all. A "← Projects" back button clears the selection.
+- [x] Wired project scoping into `App.tsx`: which project is selected is local Solid navigation state (a signal, same treatment as which mini-app tab is active), not essence. A `scopedState()` accessor filters `state().items` by `projectId` and is passed as the _read_ argument into each `compileXViewModel`, while `getState`/`setState` stay the full, unscoped pair (per Part 10's design above) — no changes needed to kanban/calendar/notes/pomodoro-essence at all. A "← Projects" back button clears the selection.
 - [x] The top-level "Add item" form and notes' create actions tag new items with the active `projectId` (via `assignToProject`)
 - [x] **Verified live**: created two projects ("Website redesign", "Personal errands"), added an item to one and a note to the other, and confirmed neither leaked into the other's Pomodoro, Kanban (same mechanism), Calendar (same mechanism), or Notes view — genuine isolation, not just code review.
 
 Part 10 (Projects) is functionally complete for this pass.
+
 - [ ] Wire project scoping into `App.tsx` for all four mini-app views
 - [x] `onAddChild` inherits its parent's `projectId` automatically (no explicit parameter needed — a child belongs to whatever project its parent already does); `onCreateRootNote` takes `projectId` explicitly since a root note has no parent to inherit one from. `compileNotesViewModel` gained an optional `projectId` parameter threading this through (→ packages/app/src/view-models/notes-view-model.ts)
 - [ ] Verified live

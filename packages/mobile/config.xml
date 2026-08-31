@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.productivityapp.app" version="0.1.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>productivity-app</name>
+    <description>
+        Pomodoro, kanban, calendar, and notes over one shared entity, organized into projects.
+    </description>
+    <author email="kirill.novik.csci@gmail.com" href="https://github.com/kino6052/productivity-app">
+        kino6052
+    </author>
+    <!--
+        www/ is not a separate build -- it's the exact same Vite output as
+        the web app and the Chrome extension (packages/app/dist), synced in
+        by scripts/sync-www.sh. Same "no backend server" guarantee applies
+        here too: Cordova's WebView loads these files directly off disk, and
+        every TPersistence<T> adapter already talks straight from the
+        client (docs/checklist.md, Part 9).
+    -->
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <platform name="android">
+        <allow-intent href="market:*" />
+    </platform>
+    <platform name="ios">
+        <allow-intent href="itms:*" />
+        <allow-intent href="itms-apps:*" />
+    </platform>
+</widget>

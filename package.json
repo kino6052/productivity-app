@@ -10,7 +10,8 @@
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "test:branches": "node scripts/branch-coverage.mjs",
-    "essence-view": "bun scripts/serve-essence-view.ts"
+    "essence-view": "bun scripts/serve-essence-view.ts",
+    "mobile:sync": "bun scripts/sync-www.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
