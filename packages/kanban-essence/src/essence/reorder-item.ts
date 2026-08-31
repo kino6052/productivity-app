@@ -1,6 +1,7 @@
 import type { TState } from "@productivity-app/core/src/essence/state";
 
-export const reorderItem = (state: TState, itemId: string, toIndex: number): TState => {
+// Generic over S -- see move-item.ts.
+export const reorderItem = <S extends TState>(state: S, itemId: string, toIndex: number): S => {
   const item = state.items.find((candidate) => candidate.id === itemId);
   if (item === undefined || item.kanban === undefined) {
     return state;
@@ -28,5 +29,5 @@ export const reorderItem = (state: TState, itemId: string, toIndex: number): TSt
         ? { ...candidate, kanban: { ...candidate.kanban, order: newOrderById.get(candidate.id)! } }
         : candidate,
     ),
-  };
+  } as S;
 };

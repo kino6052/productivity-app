@@ -137,6 +137,10 @@ Building framework-free first (conduit's phase 1), starting with Pomodoro:
 - [x] `renderNotes(state)` — recursive tree render via `selectRootNotes`/`selectNoteTree`, add-child button per note (→ `renderNotes`, packages/app/src/accidents/view/essence/notes.ts)
 
 Essence-view render functions now exist for all four mini-apps.
+
+- [x] `index.essence.ts` wires all four render functions as switchable views (pomodoro/kanban/calendar/notes) over **one shared state object** — the direct, clickable proof of the shared-entity architecture. Added `move-item`, `schedule-item`/`unschedule-item`, and `add-child` (chains `addItem` + `nestUnder`) click handlers, plus a `reference-day.ts` fixed date for the calendar grounding tool.
+- [x] Added an "One item, usable everywhere" named state (→ `states.ts`) and **verified live** via the Browser tool: the same item, with a note + kanban + calendar facet, correctly appears in all four views; clicking "Move to done" in kanban, "Add child" in notes, and switching views all worked exactly as expected against the real DOM.
+- [x] Generic-over-`<S extends TState>` refactor: `addItem`, `renameItem`, `removeItem` (core), `moveItem`, `reorderItem` (kanban), `scheduleItem`, `unscheduleItem` (calendar), `addNote`, `nestUnder`, `moveOutOfParent` (notes) — a real type-safety gap surfaced by `tsc --noEmit` (never run across the whole app package until this point): these functions were typed as `(state: TState) => TState`, so calling them on a `TPomodoroState` value silently widened the type back to `TState`, losing `activeSession` for any later pomodoro-essence call. Fixed by making them generic so the caller's wrapper type flows through unchanged, rather than requiring a manual `{...state, ...result}` merge at every call site. No behavior change — all 98 tests and 100% branch coverage held throughout.
 - [ ] `index.essential-dependencies.ts` — real logic, in-memory adapters
 - [ ] `index.ts` — real Solid app
 

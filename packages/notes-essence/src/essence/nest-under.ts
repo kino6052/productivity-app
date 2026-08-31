@@ -15,7 +15,8 @@ const isSelfOrAncestor = (state: TState, candidateId: string, fromId: string): b
   return false;
 };
 
-export const nestUnder = (state: TState, itemId: string, parentId: string): TState => {
+// Generic over S -- see core/essence/item.ts's addItem for why.
+export const nestUnder = <S extends TState>(state: S, itemId: string, parentId: string): S => {
   if (isSelfOrAncestor(state, itemId, parentId)) {
     return state;
   }
@@ -25,5 +26,5 @@ export const nestUnder = (state: TState, itemId: string, parentId: string): TSta
     items: state.items.map((item) =>
       item.id === itemId ? { ...item, note: { body: item.note?.body ?? "", parentId } } : item,
     ),
-  };
+  } as S;
 };

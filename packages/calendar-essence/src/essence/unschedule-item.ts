@@ -5,7 +5,9 @@ const withoutCalendar = (item: TItem): TItem => {
   return rest;
 };
 
-export const unscheduleItem = (state: TState, itemId: string): TState => ({
-  ...state,
-  items: state.items.map((item) => (item.id === itemId ? withoutCalendar(item) : item)),
-});
+// Generic over S -- see core/essence/item.ts's addItem for why.
+export const unscheduleItem = <S extends TState>(state: S, itemId: string): S =>
+  ({
+    ...state,
+    items: state.items.map((item) => (item.id === itemId ? withoutCalendar(item) : item)),
+  }) as S;
