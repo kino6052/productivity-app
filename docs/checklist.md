@@ -37,7 +37,7 @@ Shared shape + generic item lifecycle only — no mini-app-specific behavior.
 - [x] `createInitialState()` (→ `createInitialState`, packages/core/src/essence/state.ts)
 - [x] `addItem(state, title)` (→ `addItem`, packages/core/src/essence/item.ts)
 - [x] `renameItem(state, id, title)` (→ `renameItem`, packages/core/src/essence/rename-item.ts)
-- [ ] `removeItem(state, id)`
+- [x] `removeItem(state, id)` (→ `removeItem`, packages/core/src/essence/remove-item.ts)
 - [x] `selectItem(state, id)` (→ `selectItem`, packages/core/src/essence/selectors.ts)
 - [x] `selectAllItems(state)` (→ `selectAllItems`, packages/core/src/essence/selectors.ts)
 
