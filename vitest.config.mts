@@ -17,11 +17,16 @@ export default defineConfig({
       provider: "istanbul",
       include: ["packages/*/src/**/*.ts"],
       // Composition roots, real-IO accidents, and pure presentational glue
-      // aren't unit-tested — same precedent as conduit. Nothing exists in
-      // those categories yet; entries get added here as they're built,
-      // same living-document spirit as docs/checklist.md.
+      // aren't unit-tested — same precedent as conduit. Entries get added
+      // here as they're built, same living-document spirit as
+      // docs/checklist.md.
       exclude: [
         "packages/*/src/**/*.test.ts",
+        // Real browser global (localStorage) -- same category as
+        // conduit's navigation-hash.ts. The testable logic (Date
+        // round-tripping) lives in json-codec.ts instead, which stays
+        // covered.
+        "packages/core/src/accidents/persistence/persistence-local-storage.ts",
       ],
       reporter: ["text", "json-summary"],
     },

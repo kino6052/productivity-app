@@ -125,7 +125,7 @@ Part 7's composition roots will live).
 
 - [x] Firebase config stashed, not wired up (→ `firebaseConfig`, packages/adapters-firebase/src/firebase-config.ts)
 - [x] `encode`/`decode` — Date-safe JSON codec, needed because `TState` holds real `Date` instances that a naive `JSON.stringify`/`parse` would corrupt into strings (→ `encode`, `decode`, packages/core/src/accidents/persistence/json-codec.ts)
-- [ ] `persistence-local-storage.ts`
+- [x] `persistence-local-storage.ts` — real browser IO, excluded from the coverage gate like conduit's navigation-hash.ts (→ `createLocalStoragePersistence`, packages/core/src/accidents/persistence/persistence-local-storage.ts)
 - [ ] `persistence-firebase.ts` (wires the stashed config into a `TPersistence<T>` adapter)
 - [ ] auth (explicitly out of scope for this milestone)
 
