@@ -13,6 +13,8 @@ import { assignToProject } from "@productivity-app/projects-essence/src/essence/
 import { compilePomodoroViewModel, onTick } from "../../../view-models/pomodoro-view-model";
 import { compileKanbanViewModel } from "../../../view-models/kanban-view-model";
 import { compileCalendarViewModel } from "../../../view-models/calendar-view-model";
+import type { TCalendarViewMode } from "../../../view-models/calendar-view-model";
+import { shiftReferenceDay } from "@productivity-app/calendar-essence/src/essence/date-range";
 import { compileNotesViewModel } from "../../../view-models/notes-view-model";
 import { compileProjectSelectorViewModel } from "../../../view-models/project-selector-view-model";
 import { PomodoroView } from "./PomodoroView";
@@ -42,6 +44,17 @@ export function App(props: TAppProps) {
   const [projectId, setProjectId] = createSignal<string | undefined>(undefined);
   const isLoading = () => props.isLoading?.() ?? false;
   let titleInput: HTMLInputElement | undefined;
+
+  // Calendar's own navigation state (which mode is shown, which
+  // day/week/month is in view) -- local Solid signals, same treatment as
+  // `view`/`projectId` above: this is navigation, not essence data, so it
+  // has no business living in TState or any compileXViewModel's input.
+  // Starts on `today` in day mode.
+  const [calendarMode, setCalendarMode] = createSignal<TCalendarViewMode>("day");
+  const [calendarReferenceDay, setCalendarReferenceDay] = createSignal(props.today);
+  const onCalendarModeChange = (mode: TCalendarViewMode) => setCalendarMode(mode);
+  const onCalendarShift = (direction: 1 | -1) =>
+    setCalendarReferenceDay(shiftReferenceDay(calendarReferenceDay(), calendarMode(), direction));
 
   // The real-time clock driving the pomodoro timer -- tick() itself is a
   // pure essence function (already fully tested); a wall-clock interval
@@ -131,7 +144,16 @@ export function App(props: TAppProps) {
             </Show>
             <Show when={view() === "calendar"}>
               <CalendarView
-                vm={compileCalendarViewModel(scopedState(), props.today, props.state, props.setState)}
+                vm={compileCalendarViewModel(
+                  scopedState(),
+                  calendarReferenceDay(),
+                  calendarMode(),
+                  props.state,
+                  props.setState,
+                )}
+                onModeChange={onCalendarModeChange}
+                onPrevClick={() => onCalendarShift(-1)}
+                onNextClick={() => onCalendarShift(1)}
               />
             </Show>
             <Show when={view() === "notes"}>

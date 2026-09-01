@@ -4,6 +4,12 @@ import { removeItem } from "@productivity-app/core/src/essence/remove-item";
 import { scheduleItem } from "@productivity-app/calendar-essence/src/essence/schedule-item";
 import { unscheduleItem } from "@productivity-app/calendar-essence/src/essence/unschedule-item";
 import { selectItemsOnDay } from "@productivity-app/calendar-essence/src/essence/selectors";
+import { selectDateRange, selectDayRange } from "@productivity-app/calendar-essence/src/essence/date-range";
+import type { TCalendarViewMode, TDateRange } from "@productivity-app/calendar-essence/src/essence/date-range";
+
+// Re-exported so consumers (the Solid view, tests) only need to import
+// from this one module for the calendar's whole surface.
+export type { TCalendarViewMode };
 
 // Generic over S -- see kanban-view-model.ts for why.
 export type TGetState<S extends TState> = () => S;
@@ -54,15 +60,35 @@ export type TCalendarItemViewModel = {
   onDeleteClick: () => void;
 };
 
-export type TCalendarViewModel = {
+export type TCalendarDayViewModel = {
   dayLabel: string;
-  scheduledToday: TCalendarItemViewModel[];
+  items: TCalendarItemViewModel[];
+};
+
+export type TCalendarViewModel = {
+  mode: TCalendarViewMode;
+  // "2026-09-03" for day mode, "2026-08-31 – 2026-09-06" for week,
+  // "2026-09" for month -- a plain label, not a Date; the view owns any
+  // further formatting/localization.
+  rangeLabel: string;
+  // One entry per day in the current mode's range (always 1 in day mode,
+  // 7 in week mode, however many days the month has in month mode) --
+  // one shape regardless of mode, rather than a different field per mode.
+  days: TCalendarDayViewModel[];
   unscheduled: TCalendarItemViewModel[];
+};
+
+const formatRangeLabel = (range: TDateRange, mode: TCalendarViewMode): string => {
+  const startLabel = range.start.toISOString().slice(0, 10);
+  if (mode === "day") return startLabel;
+  if (mode === "month") return startLabel.slice(0, 7);
+  return `${startLabel} – ${range.end.toISOString().slice(0, 10)}`;
 };
 
 export const compileCalendarViewModel = <S extends TState>(
   state: S,
-  day: Date,
+  referenceDay: Date,
+  mode: TCalendarViewMode,
   getState: TGetState<S>,
   setState: TSetState<S>,
 ): TCalendarViewModel => {
@@ -75,18 +101,29 @@ export const compileCalendarViewModel = <S extends TState>(
     onDeleteClick: () => onDeleteItem(item.id, getState, setState),
   });
 
+  // "Schedule" always targets the reference day itself (the day the user
+  // is actually focused on), not the first day of a week/month range --
+  // an unscheduled item has no day of its own yet, so this is a single
+  // flat action rather than one per visible day.
+  const scheduleTarget = selectDayRange(referenceDay).start;
   const compileUnscheduled = (item: TItem): TCalendarItemViewModel => ({
     id: item.id,
     title: item.title,
-    onScheduleClick: () => onScheduleItem(item.id, day, getState, setState),
+    onScheduleClick: () => onScheduleItem(item.id, scheduleTarget, getState, setState),
     onUnscheduleClick: undefined,
     onRenameClick: (title) => onRenameItem(item.id, title, getState, setState),
     onDeleteClick: () => onDeleteItem(item.id, getState, setState),
   });
 
+  const range = selectDateRange(referenceDay, mode);
+
   return {
-    dayLabel: day.toISOString().slice(0, 10),
-    scheduledToday: selectItemsOnDay(state, day).map(compileScheduled),
+    mode,
+    rangeLabel: formatRangeLabel(range, mode),
+    days: range.days.map((day) => ({
+      dayLabel: day.toISOString().slice(0, 10),
+      items: selectItemsOnDay(state, day).map(compileScheduled),
+    })),
     unscheduled: state.items.filter((item) => item.calendar === undefined).map(compileUnscheduled),
   };
 };

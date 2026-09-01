@@ -357,6 +357,55 @@ essence calls across packages (`onCreateProject` chaining `addItem` +
       not live — the real work phase is 25 minutes long, not something to
       sit through in a live check.)
 
+## Part 13 — Calendar Day/Week/Month Views (new, requested — built)
+
+Requested: "calendar view needs to be able to see day / week / month
+view." Built as three layers, essence-first as always:
+
+- [x] `packages/calendar-essence/src/essence/date-range.ts` — pure date
+      math, UTC throughout (matching `selectors.ts`'s own `isSameUtcDay`
+      convention): `selectDayRange`/`selectWeekRange`/`selectMonthRange`
+      each return `{ start, end, days }` (Monday-start ISO week; a Sunday
+      reference day correctly lands at the *end* of its own week, not the
+      start of the next); `selectDateRange(referenceDay, mode)` dispatches
+      to the right one; `shiftReferenceDay(referenceDay, mode, direction)`
+      moves the reference day one step in whatever unit the mode shows
+      (month-mode intentionally lands on the 1st rather than preserving
+      day-of-month, avoiding the usual JS Date overflow, e.g. Jan 31 + 1
+      month landing in March) (→ same file). 14 tests, 100% branch
+      coverage.
+- [x] `compileCalendarViewModel` reshaped to `(state, referenceDay, mode,
+      getState, setState)`, returning `{ mode, rangeLabel, days,
+      unscheduled }` — one shape regardless of mode (`days` has 1 entry in
+      day mode, 7 in week, however many the month has), rather than a
+      different field per mode. "Schedule" always targets the reference
+      day itself, not the first day of a week/month range, since an
+      unscheduled item has no day of its own yet (→ packages/app/src/view-models/calendar-view-model.ts)
+- [x] `CalendarView.tsx` — a toolbar (← / rangeLabel / → / Day-Week-Month
+      buttons), then one `.calendar-day-group` per entry in `vm.days`
+      (a day sub-heading shown only in week/month mode, since day mode's
+      own toolbar heading already says which day it is), then the
+      existing Unscheduled section. Mode/day navigation is local Solid
+      state in `App.tsx` (`calendarMode`/`calendarReferenceDay` signals),
+      same treatment as `view`/`projectId` — navigation, not essence data,
+      so it has no business in `TState` or any `compileXViewModel`'s
+      input.
+- [x] The existing context-menu wiring (Part 11) needed no changes at all
+      — `ItemRow` still wraps each item regardless of which day-group it's
+      nested under.
+- [x] Typechecked cleanly, 178 tests pass, 100% branch coverage held
+      (121/121).
+- [x] **Verified live** against the real Firestore-backed app: switched
+      Day → Week → Month and back, confirmed the range label and day
+      count are correct for each (a Monday-start week, a full calendar
+      month); Prev/Next moved by the correct unit per mode (confirmed a
+      month step 2026-09 → 2026-10 → 2026-11 and back); scheduled an item
+      while in Day mode on 2026-10-01, switched to Week mode, and
+      confirmed it appeared correctly grouped under exactly that day
+      (2026-09-28 – 2026-10-04's Wednesday) with every other day in the
+      week empty; confirmed right-click Rename/Delete still works on an
+      item nested inside a day-group.
+
 ## Open Questions
 
 - [x] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Resolved in Part 5: `body` is a plain `string`; richer block types would be a future facet-shape change, not needed yet.
