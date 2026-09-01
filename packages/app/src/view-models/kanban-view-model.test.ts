@@ -47,4 +47,24 @@ describe("compileKanbanViewModel", () => {
     expect(todoColumn.cards).toHaveLength(1);
     expect(todoColumn.cards[0].moveButtons.map((b) => b.columnLabel)).toEqual(["doing", "done"]);
   });
+
+  it("onRenameClick renames the card via setState", () => {
+    const state = addItem(createInitialState(), "Write report");
+    const memory = createMemoryState(state);
+    const vm = compileKanbanViewModel(state, memory.getState, memory.setState);
+
+    vm.inbox[0].onRenameClick("Write final report");
+
+    expect(memory.getState().items[0].title).toBe("Write final report");
+  });
+
+  it("onDeleteClick removes the card via setState", () => {
+    const state = addItem(createInitialState(), "Write report");
+    const memory = createMemoryState(state);
+    const vm = compileKanbanViewModel(state, memory.getState, memory.setState);
+
+    vm.inbox[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+  });
 });

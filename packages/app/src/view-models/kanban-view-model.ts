@@ -1,4 +1,6 @@
 import type { TItem, TState } from "@productivity-app/core/src/essence/state";
+import { renameItem } from "@productivity-app/core/src/essence/rename-item";
+import { removeItem } from "@productivity-app/core/src/essence/remove-item";
 import { moveItem } from "@productivity-app/kanban-essence/src/essence/move-item";
 import { selectItemsByColumn } from "@productivity-app/kanban-essence/src/essence/selectors";
 
@@ -22,6 +24,23 @@ export const onMoveItem = <S extends TState>(
   setState(moveItem(getState(), itemId, column));
 };
 
+export const onRenameItem = <S extends TState>(
+  itemId: string,
+  title: string,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
+): void => {
+  setState(renameItem(getState(), itemId, title));
+};
+
+export const onDeleteItem = <S extends TState>(
+  itemId: string,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
+): void => {
+  setState(removeItem(getState(), itemId));
+};
+
 export type TMoveButtonViewModel = {
   columnLabel: string;
   onClick: () => void;
@@ -31,6 +50,8 @@ export type TKanbanCardViewModel = {
   id: string;
   title: string;
   moveButtons: TMoveButtonViewModel[];
+  onRenameClick: (title: string) => void;
+  onDeleteClick: () => void;
 };
 
 export type TKanbanColumnViewModel = {
@@ -54,6 +75,8 @@ const compileCardViewModel = <S extends TState>(
     columnLabel: column,
     onClick: () => onMoveItem(item.id, column, getState, setState),
   })),
+  onRenameClick: (title) => onRenameItem(item.id, title, getState, setState),
+  onDeleteClick: () => onDeleteItem(item.id, getState, setState),
 });
 
 export const compileKanbanViewModel = <S extends TState>(
