@@ -60,4 +60,24 @@ describe("compileCalendarViewModel", () => {
 
     expect(memory.getState().items[0].calendar).toBeUndefined();
   });
+
+  it("onRenameClick renames the item via setState", () => {
+    const state = addItem(createInitialState(), "Write report");
+    const memory = createMemoryState(state);
+    const vm = compileCalendarViewModel(state, day, memory.getState, memory.setState);
+
+    vm.unscheduled[0].onRenameClick("Write final report");
+
+    expect(memory.getState().items[0].title).toBe("Write final report");
+  });
+
+  it("onDeleteClick removes the item via setState", () => {
+    const state = addItem(createInitialState(), "Write report");
+    const memory = createMemoryState(state);
+    const vm = compileCalendarViewModel(state, day, memory.getState, memory.setState);
+
+    vm.unscheduled[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+  });
 });
