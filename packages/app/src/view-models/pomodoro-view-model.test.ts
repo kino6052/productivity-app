@@ -69,4 +69,26 @@ describe("compilePomodoroViewModel", () => {
       onResumeClick: expect.any(Function),
     });
   });
+
+  it("onRenameClick renames the item via setState", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const memory = createMemoryState(state);
+    const vm = compilePomodoroViewModel(state, memory.getState, memory.setState);
+
+    vm.items[0].onRenameClick("Write final report");
+
+    expect(memory.getState().items[0]).toEqual({ ...state.items[0], title: "Write final report" });
+    expect(memory.getState().items[0].id).toBe(itemId);
+  });
+
+  it("onDeleteClick removes the item via setState", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const memory = createMemoryState(state);
+    const vm = compilePomodoroViewModel(state, memory.getState, memory.setState);
+
+    vm.items[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+  });
 });

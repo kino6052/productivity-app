@@ -10,6 +10,8 @@
 import type { TPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
 import { startSession } from "@productivity-app/pomodoro-essence/src/essence/start-session";
 import { pauseSession, resumeSession } from "@productivity-app/pomodoro-essence/src/essence/pause-resume";
+import { renameItem } from "@productivity-app/core/src/essence/rename-item";
+import { removeItem } from "@productivity-app/core/src/essence/remove-item";
 import { formatDuration } from "../accidents/view/essence/format-duration";
 
 export type TGetState = () => TPomodoroState;
@@ -25,6 +27,14 @@ export const onPauseSession = (getState: TGetState, setState: TSetState): void =
 
 export const onResumeSession = (getState: TGetState, setState: TSetState): void => {
   setState(resumeSession(getState()));
+};
+
+export const onRenameItem = (itemId: string, title: string, getState: TGetState, setState: TSetState): void => {
+  setState(renameItem(getState(), itemId, title));
+};
+
+export const onDeleteItem = (itemId: string, getState: TGetState, setState: TSetState): void => {
+  setState(removeItem(getState(), itemId));
 };
 
 export type TPomodoroSessionViewModel = {
@@ -45,6 +55,11 @@ export type TPomodoroItemViewModel = {
   // gates the control, same rule as above.
   onStartClick: (() => void) | undefined;
   session: TPomodoroSessionViewModel | undefined;
+  // Always present, unlike the actions above -- renaming/deleting doesn't
+  // depend on pomodoro state. Consumed by the context menu (right-click /
+  // long-press), not shown as inline buttons.
+  onRenameClick: (title: string) => void;
+  onDeleteClick: () => void;
 };
 
 export type TPomodoroViewModel = {
@@ -75,6 +90,8 @@ export const compilePomodoroViewModel = (
       completedLabel: `${item.pomodoro?.completedCount ?? 0} completed`,
       onStartClick: isActive ? undefined : () => onStartSession(item.id, getState, setState),
       session: isActive ? compileSessionViewModel(state.activeSession!, getState, setState) : undefined,
+      onRenameClick: (title: string) => onRenameItem(item.id, title, getState, setState),
+      onDeleteClick: () => onDeleteItem(item.id, getState, setState),
     };
   }),
 });
