@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { selectDayRange, selectMonthRange, selectWeekRange } from "./date-range";
+import { selectDateRange, selectDayRange, selectMonthRange, selectWeekRange, shiftReferenceDay } from "./date-range";
 
 describe("selectDayRange", () => {
   it("returns a single-day range for the given day", () => {
@@ -68,5 +68,52 @@ describe("selectMonthRange", () => {
 
     expect(range.end.toISOString().slice(0, 10)).toBe("2026-02-28");
     expect(range.days).toHaveLength(28);
+  });
+});
+
+describe("selectDateRange", () => {
+  const referenceDay = new Date("2026-09-03T14:00:00Z");
+
+  it("dispatches to selectDayRange for \"day\"", () => {
+    expect(selectDateRange(referenceDay, "day")).toEqual(selectDayRange(referenceDay));
+  });
+
+  it("dispatches to selectWeekRange for \"week\"", () => {
+    expect(selectDateRange(referenceDay, "week")).toEqual(selectWeekRange(referenceDay));
+  });
+
+  it("dispatches to selectMonthRange for \"month\"", () => {
+    expect(selectDateRange(referenceDay, "month")).toEqual(selectMonthRange(referenceDay));
+  });
+});
+
+describe("shiftReferenceDay", () => {
+  it("moves a day-mode reference day by one day", () => {
+    const shifted = shiftReferenceDay(new Date("2026-09-03T00:00:00Z"), "day", 1);
+    expect(shifted.toISOString().slice(0, 10)).toBe("2026-09-04");
+
+    const back = shiftReferenceDay(new Date("2026-09-03T00:00:00Z"), "day", -1);
+    expect(back.toISOString().slice(0, 10)).toBe("2026-09-02");
+  });
+
+  it("moves a week-mode reference day by seven days", () => {
+    const shifted = shiftReferenceDay(new Date("2026-09-03T00:00:00Z"), "week", 1);
+    expect(shifted.toISOString().slice(0, 10)).toBe("2026-09-10");
+
+    const back = shiftReferenceDay(new Date("2026-09-03T00:00:00Z"), "week", -1);
+    expect(back.toISOString().slice(0, 10)).toBe("2026-08-27");
+  });
+
+  it("moves a month-mode reference day to the 1st of the next/previous month", () => {
+    const shifted = shiftReferenceDay(new Date("2026-09-15T00:00:00Z"), "month", 1);
+    expect(shifted.toISOString().slice(0, 10)).toBe("2026-10-01");
+
+    const back = shiftReferenceDay(new Date("2026-09-15T00:00:00Z"), "month", -1);
+    expect(back.toISOString().slice(0, 10)).toBe("2026-08-01");
+  });
+
+  it("handles a December -> January month rollover", () => {
+    const shifted = shiftReferenceDay(new Date("2026-12-15T00:00:00Z"), "month", 1);
+    expect(shifted.toISOString().slice(0, 10)).toBe("2027-01-01");
   });
 });

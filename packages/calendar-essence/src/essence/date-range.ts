@@ -45,3 +45,25 @@ export const selectMonthRange = (referenceDay: Date): TDateRange => {
   const end = new Date(Date.UTC(referenceDay.getUTCFullYear(), referenceDay.getUTCMonth() + 1, 0));
   return { start, end, days: daysBetween(start, end) };
 };
+
+export type TCalendarViewMode = "day" | "week" | "month";
+
+export const selectDateRange = (referenceDay: Date, mode: TCalendarViewMode): TDateRange => {
+  if (mode === "week") return selectWeekRange(referenceDay);
+  if (mode === "month") return selectMonthRange(referenceDay);
+  return selectDayRange(referenceDay);
+};
+
+// Moves the reference day one step forward/back in whatever unit the
+// current view mode shows. Month-mode always lands on the 1st -- the
+// exact day-of-month doesn't matter for a month view (only
+// selectMonthRange's year/month read it), and preserving it would risk
+// the usual JS Date overflow (e.g. Jan 31 + 1 month landing in March, not
+// February) for no benefit.
+export const shiftReferenceDay = (referenceDay: Date, mode: TCalendarViewMode, direction: 1 | -1): Date => {
+  if (mode === "week") return addUtcDays(referenceDay, direction * 7);
+  if (mode === "month") {
+    return new Date(Date.UTC(referenceDay.getUTCFullYear(), referenceDay.getUTCMonth() + direction, 1));
+  }
+  return addUtcDays(referenceDay, direction);
+};
