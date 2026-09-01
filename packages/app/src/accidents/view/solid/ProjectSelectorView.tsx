@@ -1,5 +1,19 @@
 import { For } from "solid-js";
-import type { TProjectSelectorViewModel } from "../../../view-models/project-selector-view-model";
+import type { TProjectSelectorViewModel, TProjectSummaryViewModel } from "../../../view-models/project-selector-view-model";
+import { createRenameDeleteActions, useContextMenuTrigger } from "./ContextMenu";
+
+function ProjectRow(props: { project: TProjectSummaryViewModel; onSelectProject: (projectId: string) => void }) {
+  const menuTrigger = useContextMenuTrigger(() =>
+    createRenameDeleteActions(props.project.title, props.project.onRenameClick, props.project.onDeleteClick),
+  );
+
+  return (
+    <li class="item-card" {...menuTrigger}>
+      <span class="item-card__title">{props.project.title}</span>
+      <button onClick={() => props.onSelectProject(props.project.id)}>Open</button>
+    </li>
+  );
+}
 
 export function ProjectSelectorView(props: {
   vm: TProjectSelectorViewModel;
@@ -23,12 +37,7 @@ export function ProjectSelectorView(props: {
       </form>
       <ul class="item-list">
         <For each={props.vm.projects}>
-          {(project) => (
-            <li class="item-card">
-              <span class="item-card__title">{project.title}</span>
-              <button onClick={() => props.onSelectProject(project.id)}>Open</button>
-            </li>
-          )}
+          {(project) => <ProjectRow project={project} onSelectProject={props.onSelectProject} />}
         </For>
       </ul>
     </div>

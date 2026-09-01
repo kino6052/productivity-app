@@ -21,6 +21,7 @@ import { KanbanView } from "./KanbanView";
 import { CalendarView } from "./CalendarView";
 import { NotesView } from "./NotesView";
 import { ProjectSelectorView } from "./ProjectSelectorView";
+import { ContextMenuProvider } from "./ContextMenu";
 
 type TViewName = "pomodoro" | "kanban" | "calendar" | "notes";
 const VIEWS: TViewName[] = ["pomodoro", "kanban", "calendar", "notes"];
@@ -100,48 +101,50 @@ export function App(props: TAppProps) {
 
   return (
     <div class="app">
-      <Show when={!isLoading()} fallback={<p class="loading-state">Loading…</p>}>
-        <Show
-          when={projectId()}
-          fallback={
-            <ProjectSelectorView
-              vm={compileProjectSelectorViewModel(props.state(), props.state, props.setState)}
-              onSelectProject={setProjectId}
-            />
-          }
-        >
-          <button class="back-button" onClick={() => setProjectId(undefined)}>
-            ← Projects
-          </button>
-          <form class="add-item-form" onSubmit={onAddItem}>
-            <input ref={titleInput} placeholder="New item title" />
-            <button type="submit">Add item</button>
-          </form>
-          <nav class="view-nav">
-            <For each={VIEWS}>
-              {(v) => (
-                <button onClick={() => setView(v)} aria-current={view() === v}>
-                  {v}
-                </button>
-              )}
-            </For>
-          </nav>
-          <Show when={view() === "pomodoro"}>
-            <PomodoroView vm={compilePomodoroViewModel(scopedState(), props.state, props.setState)} />
-          </Show>
-          <Show when={view() === "kanban"}>
-            <KanbanView vm={compileKanbanViewModel(scopedState(), props.state, props.setState)} />
-          </Show>
-          <Show when={view() === "calendar"}>
-            <CalendarView
-              vm={compileCalendarViewModel(scopedState(), props.today, props.state, props.setState)}
-            />
-          </Show>
-          <Show when={view() === "notes"}>
-            <NotesView vm={compileNotesViewModel(scopedState(), props.state, props.setState, projectId())} />
+      <ContextMenuProvider>
+        <Show when={!isLoading()} fallback={<p class="loading-state">Loading…</p>}>
+          <Show
+            when={projectId()}
+            fallback={
+              <ProjectSelectorView
+                vm={compileProjectSelectorViewModel(props.state(), props.state, props.setState)}
+                onSelectProject={setProjectId}
+              />
+            }
+          >
+            <button class="back-button" onClick={() => setProjectId(undefined)}>
+              ← Projects
+            </button>
+            <form class="add-item-form" onSubmit={onAddItem}>
+              <input ref={titleInput} placeholder="New item title" />
+              <button type="submit">Add item</button>
+            </form>
+            <nav class="view-nav">
+              <For each={VIEWS}>
+                {(v) => (
+                  <button onClick={() => setView(v)} aria-current={view() === v}>
+                    {v}
+                  </button>
+                )}
+              </For>
+            </nav>
+            <Show when={view() === "pomodoro"}>
+              <PomodoroView vm={compilePomodoroViewModel(scopedState(), props.state, props.setState)} />
+            </Show>
+            <Show when={view() === "kanban"}>
+              <KanbanView vm={compileKanbanViewModel(scopedState(), props.state, props.setState)} />
+            </Show>
+            <Show when={view() === "calendar"}>
+              <CalendarView
+                vm={compileCalendarViewModel(scopedState(), props.today, props.state, props.setState)}
+              />
+            </Show>
+            <Show when={view() === "notes"}>
+              <NotesView vm={compileNotesViewModel(scopedState(), props.state, props.setState, projectId())} />
+            </Show>
           </Show>
         </Show>
-      </Show>
+      </ContextMenuProvider>
     </div>
   );
 }

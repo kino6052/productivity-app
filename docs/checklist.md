@@ -241,22 +241,78 @@ pomodoro/kanban/calendar/notes. Design, not yet built:
 
 Part 10 (Projects) is functionally complete for this pass.
 
-## Part 11 — Context Menu (new, requested — not yet designed)
+## Part 11 — Context Menu (new, requested — built)
 
-A right-click (or long-press) context menu on items, for quick actions.
-Not yet designed: which actions belong on it (rename? delete? assign to
-project? per-facet shortcuts like "start pomodoro" from anywhere?), and
-whether it's one generic menu component parameterized by a list of
-actions (matching the view-model tier's own presence-gated-action style)
-or per-mini-app-view menus. Needs a scoping conversation before building —
-tracked here so it isn't lost, not started.
+A right-click (desktop) or long-press (touch) context menu on every item
+row across all five item-list views, since the user didn't specify an
+action set beyond "popup menu" — resolved to the sensible default of
+Rename/Delete (core's `renameItem`/`removeItem` have existed since Part 1,
+but nothing in the UI triggered either before this).
 
-- [ ] Decide the action set and whether delete exists yet (core has no
-      `removeItem`-triggering UI anywhere currently — worth resolving
-      alongside this, since a context menu is the natural place for it)
-- [ ] Design the menu as its own testable view-model tier item, same
-      pattern as the four mini-app compilers
-- [ ] Build + verify live
+Built as one **shared, reusable accident** rather than five separate menu
+implementations, since the gesture-handling logic (long-press timing,
+suppressing the native context menu, closing on outside-click or a second
+right-click) is identical everywhere and only the action list differs:
+
+- [x] `ContextMenuProvider` (Solid Context) — one instance wraps the whole
+      app in `App.tsx`; holds the currently-open menu (position + actions)
+      as a signal, renders a full-screen invisible backdrop (closes on
+      click or on a second right-click, which would otherwise just reopen
+      the menu at the new spot since the native menu is suppressed
+      everywhere) plus the actual `<ul class="context-menu">` positioned at
+      the trigger point (→ `ContextMenuProvider`, packages/app/src/accidents/view/solid/ContextMenu.tsx)
+- [x] `useContextMenuTrigger(getActions)` — a hook returning event handlers
+      to spread onto any element: `onContextMenu` (right-click, suppresses
+      the native menu via `preventDefault`) and a `onPointerDown`/`onPointerUp`/
+      `onPointerMove`/`onPointerCancel` set implementing a 500ms long-press
+      via Pointer Events, gated to `pointerType === "touch"` so it doesn't
+      also fire (redundantly, and with the wrong semantics) on a plain
+      mouse click (→ `useContextMenuTrigger`, same file)
+- [x] `createRenameDeleteActions(title, onRename, onDelete)` — the standard
+      action pair every item row wants; `window.prompt` is a real browser
+      global, fine here since this is the view layer (an accident), not a
+      view-model — view-models stay UI-framework/DOM-free (→ same file)
+- [x] `onRenameClick`/`onDeleteClick` added to all five view-model item
+      shapes (`TPomodoroItemViewModel`, `TKanbanCardViewModel`,
+      `TCalendarItemViewModel`, `TNoteViewModel`, `TProjectSummaryViewModel`),
+      each calling `renameItem`/`removeItem` via `setState` — generic over
+      `<S extends TState>` like every other view-model action, tested via
+      `createMemoryState` asserting the real state mutation, not just that
+      a callback exists (→ `onRenameItem`/`onDeleteItem` in each of
+      packages/app/src/view-models/{pomodoro,kanban,calendar,notes,project-selector}-view-model.ts)
+- [x] Wired `useContextMenuTrigger` + `createRenameDeleteActions` into all
+      five presentational components — `PomodoroView.tsx` (extracted an
+      `ItemRow` sub-component), `KanbanView.tsx` (its existing `Card`),
+      `CalendarView.tsx` (extracted a shared `ItemRow` used by both the
+      `scheduledToday` and `unscheduled` lists, since they were previously
+      inline `<li>`s with no sub-component), `NotesView.tsx` (its existing
+      `Note`), `ProjectSelectorView.tsx` (extracted a new `ProjectRow`,
+      since project rows were previously inline `<li>`s too)
+- [x] Known, accepted gap (same one already documented for delete via
+      notes/projects in Parts 5/10, not new here): deleting a note or a
+      project doesn't cascade — a deleted note's children lose their
+      parent but aren't removed or promoted to root; a deleted project's
+      member items lose their `projectId` grouping but aren't removed.
+      Narrow, known edge case; not solved here.
+- [x] `.context-menu`/`.context-menu-backdrop` styles added to
+      `styles.css`, matching the existing card/surface/border tokens.
+- [x] Typechecked cleanly (`tsc -p packages/app/tsconfig.json --noEmit`,
+      zero errors) and full suite verified: 154 tests pass, 100% branch
+      coverage held (98/98 branches) — the new view/menu code itself is
+      presentational/DOM, same coverage-exclusion precedent as every other
+      Solid component and essence-view render function.
+- [x] **Verified live** via the Browser tool against the real Firestore-backed
+      app (`index.tsx`, not the essence-view or in-memory tiers): right-click
+      opened the Rename/Delete menu correctly in all five views (a project
+      row, a pomodoro item, a kanban card, both a scheduled and an
+      unscheduled calendar item, and a notebook row); clicked Delete in
+      each of Project Selector, Kanban, and Calendar and confirmed the row
+      actually disappeared — a real round trip through Firestore, not a
+      structural-only check. Long-press (touch/`pointerType`) wiring was
+      verified structurally (the same hook, same code path as the
+      right-click handler already proven live) rather than simulated,
+      since this environment's Browser tool doesn't emulate real touch
+      pointer events.
 
 ## Open Questions
 

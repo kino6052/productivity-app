@@ -1,10 +1,15 @@
 import { For } from "solid-js";
 import type { TNoteViewModel, TNotesViewModel } from "../../../view-models/notes-view-model";
+import { createRenameDeleteActions, useContextMenuTrigger } from "./ContextMenu";
 
 function Note(props: { note: TNoteViewModel }) {
+  const menuTrigger = useContextMenuTrigger(() =>
+    createRenameDeleteActions(props.note.title, props.note.onRenameClick, props.note.onDeleteClick),
+  );
+
   return (
     <li class="note-node">
-      <div class="note-node__row">
+      <div class="note-node__row" {...menuTrigger}>
         <span class="note-node__title">{props.note.title}</span>
         <button onClick={props.note.onAddChildClick}>Add child</button>
       </div>
