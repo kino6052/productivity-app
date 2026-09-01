@@ -12,7 +12,8 @@ describe("compileProjectSelectorViewModel", () => {
 
     const vm = compileProjectSelectorViewModel(state, memory.getState, memory.setState);
 
-    expect(vm.projects).toEqual([{ id: state.items[0].id, title: "Website redesign" }]);
+    expect(vm.projects[0].id).toBe(state.items[0].id);
+    expect(vm.projects[0].title).toBe("Website redesign");
   });
 
   it("excludes plain, non-project items", () => {
@@ -33,5 +34,25 @@ describe("compileProjectSelectorViewModel", () => {
     const after = memory.getState();
     expect(after.items).toHaveLength(1);
     expect(after.items[0].project).toEqual({});
+  });
+
+  it("onRenameClick renames the project via setState", () => {
+    const state = createProject(createInitialState(), "Website redesign");
+    const memory = createMemoryState(state);
+    const vm = compileProjectSelectorViewModel(state, memory.getState, memory.setState);
+
+    vm.projects[0].onRenameClick("Website relaunch");
+
+    expect(memory.getState().items[0].title).toBe("Website relaunch");
+  });
+
+  it("onDeleteClick removes the project via setState", () => {
+    const state = createProject(createInitialState(), "Website redesign");
+    const memory = createMemoryState(state);
+    const vm = compileProjectSelectorViewModel(state, memory.getState, memory.setState);
+
+    vm.projects[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
   });
 });
