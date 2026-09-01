@@ -32,6 +32,11 @@ function ItemRow(props: { item: TPomodoroViewModel["items"][number] }) {
           </div>
         )}
       </Show>
+      {/* Requested: mark done directly, not only by letting the timer run
+          out -- always available, not gated on a session being active. */}
+      <button class="secondary" onClick={props.item.onMarkDoneClick}>
+        Mark done
+      </button>
     </li>
   );
 }

@@ -3,6 +3,7 @@ import { renameItem } from "@productivity-app/core/src/essence/rename-item";
 import { removeItem } from "@productivity-app/core/src/essence/remove-item";
 import { moveItem } from "@productivity-app/kanban-essence/src/essence/move-item";
 import { selectItemsByColumn } from "@productivity-app/kanban-essence/src/essence/selectors";
+import { clearOrphanedPomodoroSession } from "./clear-orphaned-pomodoro-session";
 
 // Fixed, same as accidents/view/essence/kanban.ts -- kanban-essence itself
 // is column-agnostic, this is just this view's illustrative set.
@@ -33,12 +34,16 @@ export const onRenameItem = <S extends TState>(
   setState(renameItem(getState(), itemId, title));
 };
 
+// Deleting an item currently running a pomodoro session would otherwise
+// orphan that session forever (see clear-orphaned-pomodoro-session.ts) --
+// this view can delete any item too (Part 11's context menu), not just
+// Pomodoro's own view.
 export const onDeleteItem = <S extends TState>(
   itemId: string,
   getState: TGetState<S>,
   setState: TSetState<S>,
 ): void => {
-  setState(removeItem(getState(), itemId));
+  setState(clearOrphanedPomodoroSession(removeItem(getState(), itemId), itemId));
 };
 
 export type TMoveButtonViewModel = {

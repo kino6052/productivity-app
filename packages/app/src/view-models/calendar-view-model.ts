@@ -6,6 +6,7 @@ import { unscheduleItem } from "@productivity-app/calendar-essence/src/essence/u
 import { selectItemsOnDay } from "@productivity-app/calendar-essence/src/essence/selectors";
 import { selectDateRange, selectDayRange } from "@productivity-app/calendar-essence/src/essence/date-range";
 import type { TCalendarViewMode, TDateRange } from "@productivity-app/calendar-essence/src/essence/date-range";
+import { clearOrphanedPomodoroSession } from "./clear-orphaned-pomodoro-session";
 
 // Re-exported so consumers (the Solid view, tests) only need to import
 // from this one module for the calendar's whole surface.
@@ -41,12 +42,16 @@ export const onRenameItem = <S extends TState>(
   setState(renameItem(getState(), itemId, title));
 };
 
+// Deleting an item currently running a pomodoro session would otherwise
+// orphan that session forever (see clear-orphaned-pomodoro-session.ts) --
+// this view can delete any item too (Part 11's context menu), not just
+// Pomodoro's own view.
 export const onDeleteItem = <S extends TState>(
   itemId: string,
   getState: TGetState<S>,
   setState: TSetState<S>,
 ): void => {
-  setState(removeItem(getState(), itemId));
+  setState(clearOrphanedPomodoroSession(removeItem(getState(), itemId), itemId));
 };
 
 export type TCalendarItemViewModel = {

@@ -6,6 +6,8 @@ import { addNote } from "@productivity-app/notes-essence/src/essence/add-note";
 import { nestUnder } from "@productivity-app/notes-essence/src/essence/nest-under";
 import { createProject } from "@productivity-app/projects-essence/src/essence/create-project";
 import { assignToProject } from "@productivity-app/projects-essence/src/essence/assign-to-project";
+import { createInitialPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
+import { startSession } from "@productivity-app/pomodoro-essence/src/essence/start-session";
 import { compileNotesViewModel } from "./notes-view-model";
 
 describe("compileNotesViewModel", () => {
@@ -104,5 +106,22 @@ describe("compileNotesViewModel", () => {
     vm.roots[0].onDeleteClick();
 
     expect(memory.getState().items).toHaveLength(0);
+  });
+
+  // Same real bug as kanban-view-model.test.ts's own case: any view's
+  // onDeleteItem can orphan an active pomodoro session if it doesn't
+  // clear it.
+  it("also clears an active pomodoro session if the deleted item was running it", () => {
+    const state = addItem(createInitialPomodoroState(), "Notebook");
+    const itemId = state.items[0].id;
+    const withNote = addNote(state, itemId, "");
+    const running = startSession(withNote, itemId);
+    const memory = createMemoryState(running);
+    const vm = compileNotesViewModel(running, memory.getState, memory.setState);
+
+    vm.roots[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+    expect(memory.getState().activeSession).toBeNull();
   });
 });

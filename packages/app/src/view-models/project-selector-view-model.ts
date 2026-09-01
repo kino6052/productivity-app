@@ -3,6 +3,7 @@ import { renameItem } from "@productivity-app/core/src/essence/rename-item";
 import { removeItem } from "@productivity-app/core/src/essence/remove-item";
 import { createProject } from "@productivity-app/projects-essence/src/essence/create-project";
 import { selectProjects } from "@productivity-app/projects-essence/src/essence/selectors";
+import { clearOrphanedPomodoroSession } from "./clear-orphaned-pomodoro-session";
 
 export type TGetState<S extends TState> = () => S;
 export type TSetState<S extends TState> = (next: S) => void;
@@ -21,12 +22,17 @@ export const onRenameItem = <S extends TState>(
 // unreachable (no project left to select them under) rather than
 // deleted themselves or reassigned. Same narrow, known edge case as
 // notes-view-model.ts's onDeleteItem.
+//
+// Does clear an orphaned pomodoro session, though (see
+// clear-orphaned-pomodoro-session.ts) -- a project is itself just an
+// item (with the project facet), so it can carry a running pomodoro
+// session like any other.
 export const onDeleteItem = <S extends TState>(
   itemId: string,
   getState: TGetState<S>,
   setState: TSetState<S>,
 ): void => {
-  setState(removeItem(getState(), itemId));
+  setState(clearOrphanedPomodoroSession(removeItem(getState(), itemId), itemId));
 };
 
 export type TProjectSummaryViewModel = {

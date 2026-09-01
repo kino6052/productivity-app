@@ -3,6 +3,8 @@ import { createInitialState } from "@productivity-app/core/src/essence/state";
 import { addItem } from "@productivity-app/core/src/essence/item";
 import { createMemoryState } from "@productivity-app/core/src/accidents/state-management/state-management";
 import { scheduleItem } from "@productivity-app/calendar-essence/src/essence/schedule-item";
+import { createInitialPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
+import { startSession } from "@productivity-app/pomodoro-essence/src/essence/start-session";
 import { compileCalendarViewModel } from "./calendar-view-model";
 
 const day = new Date("2026-09-01T00:00:00Z"); // a Tuesday
@@ -82,6 +84,22 @@ describe("compileCalendarViewModel — day mode", () => {
     vm.unscheduled[0].onDeleteClick();
 
     expect(memory.getState().items).toHaveLength(0);
+  });
+
+  // Same real bug as kanban-view-model.test.ts's own case: any view's
+  // onDeleteItem can orphan an active pomodoro session if it doesn't
+  // clear it.
+  it("also clears an active pomodoro session if the deleted item was running it", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const running = startSession(state, itemId);
+    const memory = createMemoryState(running);
+    const vm = compileCalendarViewModel(running, day, "day", memory.getState, memory.setState);
+
+    vm.unscheduled[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+    expect(memory.getState().activeSession).toBeNull();
   });
 });
 

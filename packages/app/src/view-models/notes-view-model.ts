@@ -7,6 +7,7 @@ import { nestUnder } from "@productivity-app/notes-essence/src/essence/nest-unde
 import { selectRootNotes } from "@productivity-app/notes-essence/src/essence/selectors";
 import { selectNoteTree, type TNoteTree } from "@productivity-app/notes-essence/src/essence/select-note-tree";
 import { assignToProject } from "@productivity-app/projects-essence/src/essence/assign-to-project";
+import { clearOrphanedPomodoroSession } from "./clear-orphaned-pomodoro-session";
 
 // Generic over S -- see kanban-view-model.ts for why.
 export type TGetState<S extends TState> = () => S;
@@ -60,12 +61,16 @@ export const onRenameItem = <S extends TState>(
 // parent but aren't themselves removed or promoted to root, so they'd
 // become unreachable through this tree (not in any selectNoteTree/
 // selectChildren result). A narrow, known edge case; not solved here.
+//
+// Does clear an orphaned pomodoro session, though (see
+// clear-orphaned-pomodoro-session.ts) -- this view can delete any item
+// too (Part 11's context menu), not just Pomodoro's own view.
 export const onDeleteItem = <S extends TState>(
   itemId: string,
   getState: TGetState<S>,
   setState: TSetState<S>,
 ): void => {
-  setState(removeItem(getState(), itemId));
+  setState(clearOrphanedPomodoroSession(removeItem(getState(), itemId), itemId));
 };
 
 export type TNoteViewModel = {

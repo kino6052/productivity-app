@@ -406,6 +406,78 @@ view." Built as three layers, essence-first as always:
       week empty; confirmed right-click Rename/Delete still works on an
       item nested inside a day-group.
 
+## Part 14 — Pomodoro Start Bug Fix + Manual "Mark Done" (new, requested)
+
+Reported: "the pomodoro start doesn't work now." Root-caused live (not
+guessed): during Part 12's own live verification, an item with a running
+pomodoro session had been deleted through the Kanban view's context menu
+before its session was ever stopped. `removeItem` (core) has no idea a
+pomodoro session even exists -- `activeSession` lives on `TPomodoroState`,
+pomodoro-essence's own extension of the shared `TState`, not on `TItem`
+-- so this left `activeSession` pointing at an item id that no longer
+existed anywhere. Nothing in the UI could ever reach it again (a
+session's own pause/resume controls only render for an item that still
+exists), so `startSession`'s own "reject a second concurrent session"
+guard silently blocked *every* future "Start" click, forever, with no
+error and no way out through the app itself.
+
+- [x] `startSession` (pomodoro-essence) now only blocks a new session if
+      the current one's item still actually exists in `state.items` --
+      self-heals any state that's already gotten into the orphaned shape,
+      by whatever path (→ `startSession`, packages/pomodoro-essence/src/essence/start-session.ts)
+- [x] `clearOrphanedPomodoroSession(state, deletedItemId)` -- a new
+      shared helper, since Part 11's context menu means *any* of the five
+      mini-app views can delete *any* item, and every one of them has its
+      own separate `onDeleteItem` (copy-pasted per view, not one shared
+      function). Generic over `<S extends TState>`, matching every other
+      view-model action -- it's a safe no-op on plain `TState` (no
+      `activeSession` field to find) and only does something on the
+      actual composition root's real `TPomodoroState` (→ `clearOrphanedPomodoroSession`, packages/app/src/view-models/clear-orphaned-pomodoro-session.ts)
+- [x] Wired into **all five** `onDeleteItem` implementations --
+      pomodoro-, kanban-, calendar-, notes-, and project-selector-view-model.ts
+      -- clearing the session up front, at the moment of deletion, rather
+      than relying solely on `startSession`'s own self-heal after the
+      fact. A project is itself just an item (with the project facet), so
+      it can carry a running session too -- covered the same way.
+- [x] **Requested alongside this**: a manual "mark done" action for any
+      pomodoro item, not only by letting its 25-minute work phase run out
+      naturally. `onMarkDone(itemId, ...)` reuses the exact same
+      `completeSession` + move-to-`"done"` pairing `onTick`'s own natural
+      completion already does (the completed count goes up either way),
+      and additionally stops the timer if this item happens to be the one
+      currently running -- marking something done while it's still
+      "in progress" would otherwise leave a running session for an item
+      that no longer needs one (→ `onMarkDone`, packages/app/src/view-models/pomodoro-view-model.ts). Exposed as an always-visible "Mark done"
+      button on every Pomodoro row (→ packages/app/src/accidents/view/solid/PomodoroView.tsx), not tucked into the context menu, since it's a
+      primary action.
+- [x] Typechecked cleanly, 194 tests pass, 100% branch coverage held
+      (130/130).
+- [x] **Verified live**, end to end, against the real Firestore-backed
+      app -- and the fix genuinely was needed: the actual persisted
+      document had exactly the orphaned-session shape this diagnosis
+      predicted (confirmed via a read-only inspection of the raw
+      Firestore payload, not assumed). After deploying the fix: created a
+      fresh item, clicked Start, confirmed it actually started (a
+      real ticking timer, not a silent no-op) and simultaneously
+      appeared in Kanban's Doing column; clicked "Mark done" on a
+      different, already-running item and confirmed it showed "1
+      completed", stopped its timer, and moved to Kanban's Done column.
+      Cleaned up all live test data through the app itself afterward
+      (right-click Delete on each), leaving all four Kanban columns
+      empty.
+- [x] Incidental finding while debugging this live: the pomodoro clock's
+      1-second `setInterval` (`onTick`) recreates fresh view-model object
+      trees on every tick, and Solid's `<For>` tracks list items by
+      reference -- so *every* `<For>`-rendered list in the app (not just
+      Pomodoro's own) gets fully torn down and rebuilt once a second,
+      app-wide, regardless of which view is even showing. Not a
+      functional bug (nothing observed behaves incorrectly because of
+      it), but it made browser-automation clicks against a live-reloading
+      page unreliable during this session's verification (DOM element
+      references going stale mid-click). Not fixed here -- flagged for a
+      future pass if it's ever worth memoizing/keying those view-model
+      trees more finely; out of scope for this bug report.
+
 ## Open Questions
 
 - [x] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Resolved in Part 5: `body` is a plain `string`; richer block types would be a future facet-shape change, not needed yet.

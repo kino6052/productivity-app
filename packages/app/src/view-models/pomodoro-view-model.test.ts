@@ -3,7 +3,8 @@ import { addItem } from "@productivity-app/core/src/essence/item";
 import { createMemoryState } from "@productivity-app/core/src/accidents/state-management/state-management";
 import { createInitialPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
 import type { TPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
-import { compilePomodoroViewModel, onTick } from "./pomodoro-view-model";
+import { startSession } from "@productivity-app/pomodoro-essence/src/essence/start-session";
+import { compilePomodoroViewModel, onTick, onMarkDone } from "./pomodoro-view-model";
 
 describe("compilePomodoroViewModel", () => {
   it("compiles one row per item, with a completed label", () => {
@@ -93,6 +94,53 @@ describe("compilePomodoroViewModel", () => {
     expect(memory.getState().items).toHaveLength(0);
   });
 
+  it("onMarkDoneClick marks the item done via setState (requested: manual done, not just a finished timer)", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const memory = createMemoryState(state);
+    const vm = compilePomodoroViewModel(state, memory.getState, memory.setState);
+
+    vm.items[0].onMarkDoneClick();
+
+    expect(memory.getState().items[0].kanban).toEqual({ column: "done", order: 0 });
+    expect(memory.getState().items[0].pomodoro?.completedCount).toBe(1);
+  });
+
+  // Real bug, found live: deleting an item whose pomodoro session is
+  // currently running left activeSession pointing at an id that no
+  // longer existed anywhere -- and since nothing in the UI can ever
+  // clear a session except the now-nonexistent item's own pause/resume
+  // controls, every future "Start" click was silently rejected forever
+  // (startSession's own "already running" guard). Clearing it here, at
+  // the moment of deletion, is the first line of defense; startSession's
+  // own orphan self-heal (pomodoro-essence) is the second, for state that
+  // already got into this shape before this fix existed.
+  it("onDeleteClick clears the active session when deleting the item currently running it", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const memory = createMemoryState(state);
+    const vm = compilePomodoroViewModel(state, memory.getState, memory.setState);
+    vm.items[0].onStartClick!();
+    const running = compilePomodoroViewModel(memory.getState(), memory.getState, memory.setState);
+
+    running.items[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+    expect(memory.getState().activeSession).toBeNull();
+  });
+
+  it("onDeleteClick leaves the active session alone when deleting a different item", () => {
+    const state = addItem(addItem(createInitialPomodoroState(), "Running"), "Other");
+    const memory = createMemoryState(state);
+    const vm = compilePomodoroViewModel(state, memory.getState, memory.setState);
+    vm.items[0].onStartClick!();
+    const running = compilePomodoroViewModel(memory.getState(), memory.getState, memory.setState);
+    const runningItemId = memory.getState().activeSession?.itemId;
+
+    running.items[1].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(1);
+    expect(memory.getState().activeSession?.itemId).toBe(runningItemId);
+  });
+
   it("onStartClick also moves the item to kanban's doing column (cross-app sync)", () => {
     const state = addItem(createInitialPomodoroState(), "Write report");
     const memory = createMemoryState(state);
@@ -158,5 +206,49 @@ describe("onTick", () => {
 
     expect(memory.getState().activeSession?.phase).toBe("break");
     expect(memory.getState().items[0].kanban).toEqual({ column: "done", order: 0 });
+  });
+});
+
+describe("onMarkDone", () => {
+  it("moves the item to kanban's done column", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const memory = createMemoryState(state);
+
+    onMarkDone(itemId, memory.getState, memory.setState);
+
+    expect(memory.getState().items[0].kanban).toEqual({ column: "done", order: 0 });
+  });
+
+  it("increments the item's completed count, same as finishing a work phase naturally does", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const memory = createMemoryState(state);
+
+    onMarkDone(itemId, memory.getState, memory.setState);
+
+    expect(memory.getState().items[0].pomodoro?.completedCount).toBe(1);
+  });
+
+  it("stops the timer if this item was the one currently running", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const running = startSession(state, itemId);
+    const memory = createMemoryState(running);
+
+    onMarkDone(itemId, memory.getState, memory.setState);
+
+    expect(memory.getState().activeSession).toBeNull();
+  });
+
+  it("leaves a different item's running session untouched", () => {
+    const state = addItem(addItem(createInitialPomodoroState(), "Running"), "Other");
+    const [running, other] = state.items;
+    const withSession = startSession(state, running.id);
+    const memory = createMemoryState(withSession);
+
+    onMarkDone(other.id, memory.getState, memory.setState);
+
+    expect(memory.getState().activeSession?.itemId).toBe(running.id);
   });
 });

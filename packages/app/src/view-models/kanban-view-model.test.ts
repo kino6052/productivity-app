@@ -3,6 +3,8 @@ import { createInitialState } from "@productivity-app/core/src/essence/state";
 import { addItem } from "@productivity-app/core/src/essence/item";
 import { createMemoryState } from "@productivity-app/core/src/accidents/state-management/state-management";
 import { moveItem } from "@productivity-app/kanban-essence/src/essence/move-item";
+import { createInitialPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
+import { startSession } from "@productivity-app/pomodoro-essence/src/essence/start-session";
 import { compileKanbanViewModel } from "./kanban-view-model";
 
 describe("compileKanbanViewModel", () => {
@@ -66,5 +68,25 @@ describe("compileKanbanViewModel", () => {
     vm.inbox[0].onDeleteClick();
 
     expect(memory.getState().items).toHaveLength(0);
+  });
+
+  // Real bug, found live: deleting an item from the Kanban view while its
+  // pomodoro session was running left activeSession orphaned (pointing at
+  // an id nothing could ever reach again), permanently blocking every
+  // future startSession call -- this view's onDeleteItem had no idea
+  // pomodoro sessions even exist. Fixed via the same shared
+  // clearOrphanedPomodoroSession every mini-app view-model's onDeleteItem
+  // now goes through.
+  it("also clears an active pomodoro session if the deleted item was running it", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const running = startSession(state, itemId);
+    const memory = createMemoryState(running);
+    const vm = compileKanbanViewModel(running, memory.getState, memory.setState);
+
+    vm.inbox[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+    expect(memory.getState().activeSession).toBeNull();
   });
 });
