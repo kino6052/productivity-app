@@ -16,13 +16,23 @@ const COLUMNS = ["todo", "doing", "done"];
 export type TGetState<S extends TState> = () => S;
 export type TSetState<S extends TState> = (next: S) => void;
 
+// Real bug, found live: moving an item straight to "done" from here (this
+// view's own "Move to done" button -- independent of Pomodoro's Mark
+// done, or a work phase finishing naturally) left activeSession pointing
+// at it if that item's session was running. The item still exists, just
+// done, so startSession's own orphan self-heal doesn't catch it -- every
+// future Start silently stopped working. "Done" is the actual trigger,
+// not which button was clicked to get there, so this reuses the same
+// clearOrphanedPomodoroSession every other "an item became ineligible
+// for an active session" path already goes through.
 export const onMoveItem = <S extends TState>(
   itemId: string,
   column: string,
   getState: TGetState<S>,
   setState: TSetState<S>,
 ): void => {
-  setState(moveItem(getState(), itemId, column));
+  const next = moveItem(getState(), itemId, column);
+  setState(column === "done" ? clearOrphanedPomodoroSession(next, itemId) : next);
 };
 
 export const onRenameItem = <S extends TState>(

@@ -6,11 +6,11 @@
 // compose-app.ts + pages.ts. index.essential-dependencies.tsx and
 // index.tsx (the actual composition roots) differ only in which
 // TPersistence<T> backs the initial state and every write.
-import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import type { TPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
 import { addItem } from "@productivity-app/core/src/essence/item";
 import { assignToProject } from "@productivity-app/projects-essence/src/essence/assign-to-project";
-import { compilePomodoroViewModel, onTick } from "../../../view-models/pomodoro-view-model";
+import { compilePomodoroViewModel } from "../../../view-models/pomodoro-view-model";
 import { compileKanbanViewModel } from "../../../view-models/kanban-view-model";
 import { compileCalendarViewModel } from "../../../view-models/calendar-view-model";
 import type { TCalendarViewMode } from "../../../view-models/calendar-view-model";
@@ -56,23 +56,17 @@ export function App(props: TAppProps) {
   const onCalendarShift = (direction: 1 | -1) =>
     setCalendarReferenceDay(shiftReferenceDay(calendarReferenceDay(), calendarMode(), direction));
 
-  // The real-time clock driving the pomodoro timer -- tick() itself is a
-  // pure essence function (already fully tested); a wall-clock interval
-  // calling it once a second is the actual accident. onTick (the
-  // view-model tier) wraps tick(): it skips persisting when tick() is a
-  // documented no-op (returns the exact same state reference -- calling
-  // setState/persist unconditionally every second here, the original
-  // version of this code, was a real bug: with no session running, it
-  // fired the same no-op write once a second forever, both to
-  // localStorage and, once wired up, to Firestore -- caught by the sheer
-  // number of write attempts visible in the console during live testing,
-  // not by inspection), and it's also where finishing a work phase syncs
-  // the item to kanban's "done" column (requested cross-app sync; see
-  // onTick's own comment in pomodoro-view-model.ts).
-  onMount(() => {
-    const intervalId = setInterval(() => onTick(props.state, props.setState), 1000);
-    onCleanup(() => clearInterval(intervalId));
-  });
+  // The real-time clock driving the pomodoro timer used to live here as a
+  // raw setInterval tied to Solid's onMount/onCleanup -- wrong layer: the
+  // clock is background process logic, not view logic, and tying it to
+  // *this* component's mount lifecycle meant Solid's dev HMR hot-swapping
+  // this component (vite-plugin-solid) could leave the *previous*
+  // instance's interval running, still closed over an old props.state/
+  // props.setState, racing the new instance's writes. Moved to a real
+  // accident (packages/core/src/accidents/clock/clock.ts) started once by
+  // the composition root (index.tsx / index.essential-dependencies.tsx),
+  // not by any one view -- same reasoning as persistence/state-management
+  // already living outside any Solid component.
 
   // The one place a brand-new top-level item gets created -- every
   // mini-app view only ever acts on items that already exist (moving,

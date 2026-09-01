@@ -7,10 +7,12 @@
 // it wires together is already covered by their own tests.
 import { createSignal } from "solid-js";
 import { createMemoryPersistence } from "@productivity-app/core/src/accidents/persistence/persistence";
+import { createClock } from "@productivity-app/core/src/accidents/clock/clock";
 import {
   createInitialPomodoroState,
   type TPomodoroState,
 } from "@productivity-app/pomodoro-essence/src/essence/state";
+import { onTick } from "./view-models/pomodoro-view-model";
 import { App } from "./accidents/view/solid/App";
 
 export function createEssentialDependenciesApp() {
@@ -21,6 +23,11 @@ export function createEssentialDependenciesApp() {
     persistence.save(next);
     setState(next);
   };
+
+  // The pomodoro clock, as its own background-process accident -- not
+  // tied to any view's component lifecycle (see clock.ts's own header
+  // comment for why). Started once, here, alongside the state it drives.
+  createClock().onInterval(1000, () => onTick(state, setStateAndPersist));
 
   return () => <App state={state} setState={setStateAndPersist} today={new Date()} />;
 }

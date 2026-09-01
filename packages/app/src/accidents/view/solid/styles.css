@@ -152,6 +152,20 @@ button:hover {
   font-size: 13px;
 }
 
+/* A completed pomodoro item (requested: grey out + strike through,
+   distinct from an active item beyond just which section it's in). */
+.item-card--done {
+  background: var(--color-bg);
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.item-card--done .item-card__title {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
 .item-card__session {
   display: flex;
   align-items: center;

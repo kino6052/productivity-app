@@ -89,4 +89,48 @@ describe("compileKanbanViewModel", () => {
     expect(memory.getState().items).toHaveLength(0);
     expect(memory.getState().activeSession).toBeNull();
   });
+
+  // Real bug, found live: manually moving an item straight to "done" from
+  // this view (the "Move to done" button, independent of Pomodoro's own
+  // Mark done / a natural timer completion) left activeSession pointing
+  // at it -- the item still exists, just done, so startSession's own
+  // orphan self-heal doesn't catch it, and every future Start silently
+  // stopped working. "Done" itself is the trigger, not which button was
+  // clicked to get there.
+  it("also clears an active pomodoro session when moving that item to done specifically", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const running = startSession(state, itemId);
+    const memory = createMemoryState(running);
+    const vm = compileKanbanViewModel(running, memory.getState, memory.setState);
+
+    vm.inbox[0].moveButtons.find((b) => b.columnLabel === "done")!.onClick();
+
+    expect(memory.getState().items[0].kanban).toEqual({ column: "done", order: 0 });
+    expect(memory.getState().activeSession).toBeNull();
+  });
+
+  it("does not touch an active pomodoro session when moving that item to a non-done column", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const running = startSession(state, itemId);
+    const memory = createMemoryState(running);
+    const vm = compileKanbanViewModel(running, memory.getState, memory.setState);
+
+    vm.inbox[0].moveButtons.find((b) => b.columnLabel === "todo")!.onClick();
+
+    expect(memory.getState().activeSession?.itemId).toBe(itemId);
+  });
+
+  it("leaves a different item's active session untouched when moving this item to done", () => {
+    const state = addItem(addItem(createInitialPomodoroState(), "Running"), "Other");
+    const [running, other] = state.items;
+    const withSession = startSession(state, running.id);
+    const memory = createMemoryState(withSession);
+    const vm = compileKanbanViewModel(withSession, memory.getState, memory.setState);
+
+    vm.inbox.find((c) => c.id === other.id)!.moveButtons.find((b) => b.columnLabel === "done")!.onClick();
+
+    expect(memory.getState().activeSession?.itemId).toBe(running.id);
+  });
 });

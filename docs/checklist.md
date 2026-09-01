@@ -478,6 +478,132 @@ error and no way out through the app itself.
       future pass if it's ever worth memoizing/keying those view-model
       trees more finely; out of scope for this bug report.
 
+## Part 15 — Completed Section, Timer-as-Accident, and the Full Dangling-Session Fix (requested)
+
+Four related requests landed together, and turned up a deeper design gap
+than any one of them alone:
+
+1. "Mark done doesn't work properly, should move it on the pomodoro
+   screen in the section 'completed' and have a strike through as well
+   as grey out." Part 14's `onMarkDone` updated the kanban facet but
+   nothing on the Pomodoro screen itself reflected it.
+2. "A task created through notes cannot be started in pomodoro."
+3. "We need to add a check in the timer callbacks for whether we are
+   stopped to prevent race conditions — we also have to not rely on
+   closures but on actual state via getState." (Diagnosing what turned
+   out to be a real class of bug, below.)
+4. "We shouldn't tie intervals and logic to Solid because it's a view —
+   all logic that isn't view lives outside." (A direct architectural
+   correction while implementing #3.)
+5. "Make sure to rely as little on live debugging and as much on
+   view-model tests — try to move as much logic from views and rely on
+   autotests." Every fix below (including the notes-can't-start root
+   cause) was pinned down with a failing view-model test *before* being
+   fixed, not by clicking around live.
+
+**Completed section (#1):**
+
+- [x] `compilePomodoroViewModel` now returns `{ items, completed }`
+      instead of one flat `items` list — "done" is exactly
+      `kanban.column === "done"`, the same signal every completion path
+      already sets, so no new concept was needed. A completed item drops
+      to a separate `TCompletedPomodoroItemViewModel` shape with no
+      start/session/mark-done-again controls, just rename/delete +
+      its final `completedLabel` (→ packages/app/src/view-models/pomodoro-view-model.ts)
+- [x] `PomodoroView.tsx` renders a "Completed" heading + section when
+      `vm.completed` is non-empty; `.item-card--done` (grey background,
+      reduced opacity, strikethrough title) styles it distinctly, not
+      just by which section it's in (→ packages/app/src/accidents/view/solid/PomodoroView.tsx,
+      styles.css)
+
+**The real dangling-session bug, found underneath #1 and #2 (not
+guessed — pinned down with failing tests first, per request #5):**
+
+Splitting the Pomodoro screen by `kanban.column === "done"` exposed that
+**"done" was a bigger event than Part 14's fix accounted for.**
+`onMarkDone` correctly cleared `activeSession` when *it* was the one
+finishing an item — but three other paths could also make an item
+"done" without clearing it, each leaving `activeSession` pointing at an
+item that still exists (so `startSession`'s existing orphan self-heal,
+which only checks *existence*, doesn't catch it) but is now hidden in
+the Completed section — silently blocking **every** future Start,
+app-wide, with no error and no visible reason why. This is exactly what
+"a task created through notes cannot be started" turned out to be: not
+anything about notes specifically, just the next Start click after any
+one of these gaps fired.
+
+- [x] `onTick`'s natural work-phase completion used to let tick()'s own
+      break-transition stand (`activeSession` continuing into "break"
+      for the same item) — now a terminal completion: the session stops
+      outright the moment the item moves to "done", matching "moves to
+      Completed" being a done state, not a cue to auto-cycle into a
+      break (→ `onTick`, packages/app/src/view-models/pomodoro-view-model.ts)
+- [x] Kanban's own "Move to done" button (`onMoveItem`) didn't know
+      pomodoro sessions exist at all — now clears `activeSession` too,
+      specifically when the destination column is `"done"`, via the same
+      shared helper as delete (→ `onMoveItem`, packages/app/src/view-models/kanban-view-model.ts)
+- [x] `clearOrphanedPomodoroSession` broadened from "the item was
+      deleted" to the general "an item became ineligible to hold an
+      active session" — same mechanics, now documented and used for both
+      delete and move-to-done (→ packages/app/src/view-models/clear-orphaned-pomodoro-session.ts)
+- [x] Defense in depth, not just prevention: `onStartSession` now treats
+      a stale `activeSession` (pointing at an item that's gone *or*
+      already done) as if there were none, before attempting to start —
+      self-heals any state that got into this shape before the three
+      fixes above existed, not just prevents new occurrences (→ `onStartSession`,
+      packages/app/src/view-models/pomodoro-view-model.ts)
+- [x] Every one of these was caught by writing a failing view-model test
+      first (constructing the exact stale/dangling state directly, no
+      live clicking involved), confirming red, then fixing — not
+      discovered by guessing and not "fixed" without a test proving the
+      failure mode first.
+
+**Timer as its own accident, not tied to Solid (#3 and #4):**
+
+- [x] New `packages/core/src/accidents/clock/clock.ts` — `TClock` +
+      `createClock(deps?)`, following the same port/factory pattern as
+      persistence/state-management. `onInterval(intervalMs, callback)`
+      returns a `stop()` that's a **guaranteed no-op guard**, not just a
+      `clearInterval` call: even if the underlying timer somehow kept
+      firing (e.g. a leaked interval), `stop()` makes the callback do
+      nothing from that point on. `setInterval`/`clearInterval` are
+      injected (defaulting to the real globals, bound to `globalThis`),
+      which is what makes the guard itself actually testable — 6 tests,
+      including "stops invoking the callback even if the underlying
+      timer keeps firing anyway," the literal race condition this exists
+      to prevent.
+- [x] **Real bug, caught live**: the real globals need `.bind(globalThis)`
+      — a bare `{ setInterval, clearInterval }` destructure throws
+      "Illegal invocation" in a real browser (they're native DOM APIs,
+      not plain functions detachable from their `this`). Caught by
+      actually loading the real app, not assumed — the page was blank
+      with a thrown error until this was fixed.
+- [x] Removed the raw `setInterval` from `App.tsx`'s `onMount`/`onCleanup`
+      entirely — it was tied to the wrong layer to begin with (view
+      component lifecycle, not background-process lifecycle), and Solid's
+      dev HMR (`vite-plugin-solid`) hot-swapping that component without
+      running the previous instance's `onCleanup` first was a real
+      mechanism by which a stale interval, still closed over an old
+      `getState`/`setState` pair, could keep writing and race a newer
+      instance's writes. The clock is now started once, in each
+      composition root (`index.tsx` / `index.essential-dependencies.tsx`),
+      alongside the state and persistence it drives — not inside the
+      returned Solid component at all (→ packages/app/src/accidents/view/solid/App.tsx,
+      packages/app/src/index.tsx, packages/app/src/index.essential-dependencies.tsx)
+- [x] Every read still goes through `getState()` fresh on each tick
+      (`onTick`, `onStartSession`, `onMarkDone` all take `getState`/
+      `setState` and call `getState()` themselves) — never a state
+      *value* captured in a closure at some earlier point, addressing
+      the "not rely on closures but on actual state via getState" half
+      of the request directly.
+- [x] Typechecked cleanly, 210 tests pass, 100% branch coverage held
+      (143/143).
+- [x] **Verified live** (lean, after the failing-tests-first work above,
+      not instead of it): the "Illegal invocation" fix confirmed on a
+      genuinely fresh tab with zero console errors; a note-created item's
+      Start button confirmed working end to end against the real
+      Firestore-backed app, syncing correctly to Kanban's Doing column.
+
 ## Open Questions
 
 - [x] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Resolved in Part 5: `body` is a plain `string`; richer block types would be a future facet-shape change, not needed yet.

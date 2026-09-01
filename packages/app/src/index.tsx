@@ -5,10 +5,12 @@
 // signals + real network IO.
 import { createSignal, onCleanup } from "solid-js";
 import { createFirebasePersistence } from "@productivity-app/adapters-firebase/src/persistence-firebase";
+import { createClock } from "@productivity-app/core/src/accidents/clock/clock";
 import {
   createInitialPomodoroState,
   type TPomodoroState,
 } from "@productivity-app/pomodoro-essence/src/essence/state";
+import { onTick } from "./view-models/pomodoro-view-model";
 import { App } from "./accidents/view/solid/App";
 
 // Single-user, no auth (this milestone's scope) -- one fixed document
@@ -41,6 +43,16 @@ export function createRealApp() {
     persistence.save(next);
     setState(next);
   };
+
+  // The pomodoro clock, as its own background-process accident -- not
+  // tied to any view's component lifecycle (see clock.ts's own header
+  // comment for why: it used to be a raw setInterval inside App.tsx's
+  // onMount/onCleanup, and Solid's dev HMR hot-swapping that component
+  // could leave a previous instance's interval running, racing the new
+  // one's writes). Started once, here, alongside the state and
+  // persistence it drives, rather than inside the returned Solid
+  // component below.
+  createClock().onInterval(1000, () => onTick(state, setStateAndPersist));
 
   return function RealApp() {
     onCleanup(unsubscribe);
