@@ -1,5 +1,7 @@
 import type { TState } from "@productivity-app/core/src/essence/state";
 import { addItem } from "@productivity-app/core/src/essence/item";
+import { renameItem } from "@productivity-app/core/src/essence/rename-item";
+import { removeItem } from "@productivity-app/core/src/essence/remove-item";
 import { addNote } from "@productivity-app/notes-essence/src/essence/add-note";
 import { nestUnder } from "@productivity-app/notes-essence/src/essence/nest-under";
 import { selectRootNotes } from "@productivity-app/notes-essence/src/essence/selectors";
@@ -45,10 +47,33 @@ export const onCreateRootNote = <S extends TState>(
   setState(projectId === undefined ? withNote : assignToProject(withNote, itemId, projectId));
 };
 
+export const onRenameItem = <S extends TState>(
+  itemId: string,
+  title: string,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
+): void => {
+  setState(renameItem(getState(), itemId, title));
+};
+
+// Does not cascade to children -- a deleted note's children lose their
+// parent but aren't themselves removed or promoted to root, so they'd
+// become unreachable through this tree (not in any selectNoteTree/
+// selectChildren result). A narrow, known edge case; not solved here.
+export const onDeleteItem = <S extends TState>(
+  itemId: string,
+  getState: TGetState<S>,
+  setState: TSetState<S>,
+): void => {
+  setState(removeItem(getState(), itemId));
+};
+
 export type TNoteViewModel = {
   id: string;
   title: string;
   onAddChildClick: () => void;
+  onRenameClick: (title: string) => void;
+  onDeleteClick: () => void;
   children: TNoteViewModel[];
 };
 
@@ -65,6 +90,8 @@ const compileNoteViewModel = <S extends TState>(
   id: tree.item.id,
   title: tree.item.title,
   onAddChildClick: () => onAddChild(tree.item.id, getState, setState),
+  onRenameClick: (title) => onRenameItem(tree.item.id, title, getState, setState),
+  onDeleteClick: () => onDeleteItem(tree.item.id, getState, setState),
   children: tree.children.map((child) => compileNoteViewModel(child, getState, setState)),
 });
 

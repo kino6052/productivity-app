@@ -83,4 +83,26 @@ describe("compileNotesViewModel", () => {
 
     expect(memory.getState().items[1].projectId).toBe(projectId);
   });
+
+  it("onRenameClick renames the note via setState", () => {
+    const state = addItem(createInitialState(), "Notebook");
+    const withNote = addNote(state, state.items[0].id, "");
+    const memory = createMemoryState(withNote);
+    const vm = compileNotesViewModel(withNote, memory.getState, memory.setState);
+
+    vm.roots[0].onRenameClick("Project notebook");
+
+    expect(memory.getState().items[0].title).toBe("Project notebook");
+  });
+
+  it("onDeleteClick removes the note via setState", () => {
+    const state = addItem(createInitialState(), "Notebook");
+    const withNote = addNote(state, state.items[0].id, "");
+    const memory = createMemoryState(withNote);
+    const vm = compileNotesViewModel(withNote, memory.getState, memory.setState);
+
+    vm.roots[0].onDeleteClick();
+
+    expect(memory.getState().items).toHaveLength(0);
+  });
 });
