@@ -36,11 +36,23 @@
 // attempted before that -- otherwise that write would fail outright and
 // never retry, since a rejected setDoc call doesn't reattempt itself the
 // way a live onSnapshot listener does.
+//
+// Writes go through createWriteQueue (real bug, found via user report:
+// "race conditions when starting/stopping/moving done and back") --
+// view-model actions are synchronous and never await save(), so two
+// state-changing clicks fired close together (e.g. Start immediately
+// followed by Mark done) would otherwise start two independent setDoc
+// calls with no ordering guarantee between them; whichever happened to
+// reach Firestore's server *last* would win, not necessarily the one
+// that was logically the more recent action -- silently reverting newer
+// state to something stale. The queue guarantees at most one write in
+// flight and coalesces to the latest value, so this can't happen.
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { deleteDoc, doc, getFirestore, onSnapshot, setDoc } from "firebase/firestore";
 import type { TPersistence } from "@productivity-app/core/src/accidents/persistence/persistence";
 import { decode, encode } from "@productivity-app/core/src/accidents/persistence/json-codec";
+import { createWriteQueue } from "@productivity-app/core/src/accidents/write-queue/write-queue";
 import { firebaseConfig } from "./firebase-config";
 
 export type TFirebasePersistence<T> = TPersistence<T> & {
@@ -60,11 +72,13 @@ export function createFirebasePersistence<T>(collectionPath: string, docId: stri
   let pendingWrite: { value: T } | undefined;
   const listeners = new Set<(value: T | undefined) => void>();
 
-  const writeThrough = (value: T) => {
-    setDoc(ref, { payload: encode(value) }).catch((error: unknown) => {
+  const writeQueue = createWriteQueue<T>(
+    (value) => setDoc(ref, { payload: encode(value) }),
+    (error: unknown) => {
       console.error(`[persistence-firebase] write to ${collectionPath}/${docId} failed:`, error);
-    });
-  };
+    },
+  );
+  const writeThrough = (value: T) => writeQueue.enqueue(value);
 
   onAuthStateChanged(auth, (user) => {
     if (user === null) return;

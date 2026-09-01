@@ -604,6 +604,74 @@ one of these gaps fired.
       Start button confirmed working end to end against the real
       Firestore-backed app, syncing correctly to Kanban's Doing column.
 
+## Part 16 — Task Switching, Write-Ordering Safety (requested, view-model-test-driven)
+
+Three related requests, all resolved test-first at the view-model/
+accident tier per explicit instruction ("make sure to rely as little on
+live debugging and as much on view-model tests"):
+
+**"When we start on another task, it should stop/reset the other and
+start the one we clicked":**
+
+- [x] `startSession` (pomodoro-essence) simplified to always switch:
+      starting a different item replaces whichever session was
+      previously active outright (a fresh full-length work phase,
+      never resuming wherever the previous one left off), rather than
+      rejecting the click. Starting the item that's *already* active
+      stays a no-op (doesn't reset its own progress). This also retired
+      the essence-level "orphaned/stale session" self-heal Parts 14-15
+      built up — there's no more "blocked" state left to guard against,
+      since switching always wins regardless of what the previous
+      session pointed at (→ `startSession`, packages/pomodoro-essence/src/essence/start-session.ts)
+- [x] `onStartSession` (view-model) adds the cross-app half: the newly
+      started item moves to kanban's "doing"; whichever item gets
+      abandoned reverts from "doing" back to "todo" (every item that
+      ever became active got moved to "doing" by this same function, so
+      there's always a kanban facet to revert) — skipped if that item is
+      somehow already done, so switching away from a running session can
+      never accidentally un-complete a finished task. `setState` is
+      skipped entirely on the true no-op (starting the already-active
+      item), matching the "don't persist a no-op" precedent `onTick`
+      already set (→ `onStartSession`, packages/app/src/view-models/pomodoro-view-model.ts)
+- [x] 9 new/rewritten tests across both files (switching, resuming vs.
+      resetting progress, the already-active no-op, and the
+      don't-un-complete-a-done-item guard) — no live clicking involved
+      in finding or verifying any of this.
+
+**"Race conditions when starting/stopping/moving done and back" +
+"make sure to persist to Firebase in the back (autosave fashion)":**
+
+Autosave itself needed no new work — every view-model action already
+routes exclusively through the one injected `setState`, which
+`index.tsx`/`index.essential-dependencies.tsx` wire to persist-then-update;
+there's no separate "save" step or path that bypasses it. The actual gap
+was write *ordering*: view-model actions are synchronous and never await
+`save()`, so two state-changing clicks fired close together (e.g. Start
+immediately followed by Mark done) would start two independent Firestore
+writes with no ordering guarantee between them — whichever happened to
+reach the server *last* would win, not necessarily the one that was
+logically more recent, silently reverting newer state to something stale.
+
+- [x] New `packages/core/src/accidents/write-queue/write-queue.ts` --
+      `createWriteQueue(write, onError)`, generic over the actual write
+      function so the ordering guarantee is unit-testable without real
+      network IO. Guarantees at most one write in flight at a time and
+      coalesces a burst down to only its *latest* value (cheaper than a
+      strict FIFO queue too, since each write is a full-document
+      replacement, not a delta — sending every intermediate value would
+      be wasted traffic for no benefit). 6 tests, including the literal
+      race this exists to close: "coalesces a burst that arrives
+      mid-write down to just its latest value."
+- [x] Wired into `persistence-firebase.ts`'s `writeThrough` — `save()`
+      now enqueues onto the write queue instead of firing an independent
+      `setDoc()` per call.
+- [x] Typechecked cleanly, 220 tests pass, 100% branch coverage held
+      (148/148).
+- [x] Verified live only as a lean final sanity check (a genuinely fresh
+      tab loads with zero console errors), not as the primary proof —
+      the switching and write-ordering guarantees are proven by the
+      tests above.
+
 ## Open Questions
 
 - [x] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Resolved in Part 5: `body` is a plain `string`; richer block types would be a future facet-shape change, not needed yet.

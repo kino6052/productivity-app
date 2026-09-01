@@ -21,37 +21,47 @@ import { formatDuration } from "../accidents/view/essence/format-duration";
 export type TGetState = () => TPomodoroState;
 export type TSetState = (next: TPomodoroState) => void;
 
-// Is the current activeSession stale -- pointing at an item that's gone,
-// or already done -- rather than a legitimately still-running one?
-// startSession's own essence-level orphan self-heal only catches "the
-// item no longer exists"; it doesn't (and per docs/conventions.md
-// shouldn't -- essence stays agnostic of other mini-apps' facets) know
-// about kanban's "done" column. Defense in depth, not just prevention:
-// onTick/onMarkDone/kanban's onMoveItem now all clear activeSession the
-// moment an item becomes done, so a *fresh* stale session shouldn't
-// arise going forward -- but any state that got into this shape before
-// those fixes existed (a real, already-happened case, not hypothetical)
-// needs to self-heal too, not stay permanently stuck.
-const isSessionStale = (state: TPomodoroState): boolean => {
-  if (state.activeSession === null) return false;
-  const item = state.items.find((i) => i.id === state.activeSession!.itemId);
-  return item === undefined || item.kanban?.column === "done";
-};
-
 // Cross-app sync (requested): starting a pomodoro session is also the
 // moment an item is "in progress" from a kanban point of view. This lives
 // here, not in either essence -- pomodoro-essence and kanban-essence stay
 // mutually unaware of each other (docs/checklist.md, Part 6); the
 // view-model tier is where chaining across mini-app essences already
 // happens (same idiom as onCreateProject chaining addItem +
-// assignToProject). startSession is a documented no-op (returns the same
-// reference) when a session is already running, so only move to "doing"
-// when a session genuinely started.
+// assignToProject).
+//
+// Requested: starting a different item while one is already running
+// switches to it -- stops/resets the previous one and starts the one
+// just clicked, rather than being rejected. Essence's own startSession
+// already does the switch unconditionally (start-session.ts); this adds
+// the cross-app half: the newly started item moves to "doing", and
+// whichever item was abandoned reverts from "doing" back to "todo" --
+// every item that ever became active got moved to "doing" by this same
+// function, so there's always a kanban facet to revert. The revert
+// happens *before* moving the new item to "doing" so kanban's own order
+// count (which counts other items already in the destination column)
+// doesn't still count the item that's on its way out. Skipped entirely
+// if the abandoned item is somehow already done (defends against ever
+// un-completing a finished task -- shouldn't arise any more now that
+// onTick/onMarkDone/kanban's onMoveItem all clear activeSession the
+// moment an item becomes done, but the guard costs nothing).
+//
+// startSession is a documented no-op (returns the same reference) only
+// when itemId is already the active item -- setState is skipped
+// entirely then, same "don't persist a no-op" precedent as onTick.
 export const onStartSession = (itemId: string, getState: TGetState, setState: TSetState): void => {
-  const rawPrev = getState();
-  const prev = isSessionStale(rawPrev) ? { ...rawPrev, activeSession: null } : rawPrev;
+  const prev = getState();
+  const previousItemId = prev.activeSession?.itemId;
   const next = startSession(prev, itemId);
-  setState(next === prev ? next : moveItem(next, itemId, "doing"));
+  if (next === prev) return;
+
+  let result = next;
+  if (previousItemId !== undefined && previousItemId !== itemId) {
+    const previousItem = result.items.find((item) => item.id === previousItemId);
+    if (previousItem !== undefined && previousItem.kanban?.column !== "done") {
+      result = moveItem(result, previousItemId, "todo");
+    }
+  }
+  setState(moveItem(result, itemId, "doing"));
 };
 
 export const onPauseSession = (getState: TGetState, setState: TSetState): void => {

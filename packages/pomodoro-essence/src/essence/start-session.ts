@@ -1,17 +1,19 @@
 import type { TPomodoroState } from "./state";
 import { WORK_DURATION_SECONDS } from "./constants";
 
+// Requested: starting a different item while one is already active
+// switches to it -- stops/resets whatever was running and starts the one
+// just clicked, rather than rejecting the click. Only starting the item
+// that's *already* the active one is a no-op (doesn't reset its own
+// in-progress time); every other case just replaces activeSession
+// outright, always with a fresh full-length work phase. This also
+// retires the essence-level "orphaned/stale session" self-heal a couple
+// of parts of this project's history built up (docs/checklist.md, Parts
+// 14-15): there's no more "blocked" state left to guard against, since
+// switching always wins regardless of what the previous activeSession
+// pointed at or whether that item still exists.
 export const startSession = (state: TPomodoroState, itemId: string): TPomodoroState => {
-  // Only block a new session if the current one still belongs to a real
-  // item. An orphaned session (its item was deleted without going
-  // through onDeleteItem's own activeSession cleanup, or by any other
-  // path that doesn't know pomodoro sessions exist) would otherwise block
-  // every future session forever, with nothing in the UI able to clear
-  // it -- its pause/resume controls only ever render for an item that
-  // still exists.
-  const activeItemStillExists =
-    state.activeSession !== null && state.items.some((item) => item.id === state.activeSession!.itemId);
-  if (activeItemStillExists) {
+  if (state.activeSession?.itemId === itemId) {
     return state;
   }
 

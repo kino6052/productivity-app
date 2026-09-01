@@ -19,28 +19,70 @@ describe("startSession", () => {
     });
   });
 
-  it("does not start a second session while one is already active", () => {
+  // Requested: starting a different item while one is already running
+  // switches to it -- stops/resets whatever was active and starts the
+  // one just clicked, rather than silently rejecting the click. This
+  // also means an item's in-progress time is simply not preserved once
+  // you switch away from it -- there's nowhere else for it to live, since
+  // activeSession is the one place a session's progress is tracked at
+  // all (see state.ts's own reasoning for why it's not a per-item field).
+  it("switches to a different item, replacing whichever session was previously active", () => {
     const state = addItem(addItem(createInitialPomodoroState(), "a"), "b");
     const [first, second] = state.items;
-
     const withFirst = startSession(state, first.id);
-    const withSecondAttempt = startSession(withFirst, second.id);
 
-    expect(withSecondAttempt.activeSession?.itemId).toBe(first.id);
+    const withSecond = startSession(withFirst, second.id);
+
+    expect(withSecond.activeSession).toEqual({
+      itemId: second.id,
+      phase: "work",
+      remainingSeconds: WORK_DURATION_SECONDS,
+      status: "running",
+    });
   });
 
-  // Real bug, found live: deleting an item while its session is running
-  // (removeItem has no idea a pomodoro session even exists -- it's
-  // TPomodoroState's own field, not on TItem) leaves activeSession
-  // pointing at an id that no longer exists in state.items. Nothing in
-  // the UI can ever clear that (the session's own pause/resume controls
-  // only render for an item that still exists), so without this,
-  // starting *any* future session is permanently blocked. onDeleteItem
-  // (pomodoro-view-model.ts) now also clears activeSession up front when
-  // deleting its own item, but this self-heals any state that already
-  // got orphaned before that fix existed, or by any other path that
-  // might remove an item without knowing about pomodoro sessions.
-  it("starts a new session even if the current one belongs to an item that no longer exists", () => {
+  // Switching resets progress -- the newly started item always gets a
+  // full, fresh work phase, never picking up wherever the previous
+  // session happened to be (partway through work, or mid-break).
+  it("gives the newly started item a fresh full-length work phase, even if the previous session was mid-break", () => {
+    const state = addItem(addItem(createInitialPomodoroState(), "a"), "b");
+    const [first, second] = state.items;
+    const midBreak = {
+      ...startSession(state, first.id),
+      activeSession: { itemId: first.id, phase: "break" as const, remainingSeconds: 42, status: "running" as const },
+    };
+
+    const withSecond = startSession(midBreak, second.id);
+
+    expect(withSecond.activeSession).toEqual({
+      itemId: second.id,
+      phase: "work",
+      remainingSeconds: WORK_DURATION_SECONDS,
+      status: "running",
+    });
+  });
+
+  // Starting the item that's already the active one is a no-op -- it
+  // doesn't reset its own in-progress time. The UI never offers a Start
+  // button for the currently active item in the first place (presence-
+  // gated in the view-model), but this keeps the essence function itself
+  // safe to call directly without that assumption.
+  it("does not reset the active item's own progress if it's started again", () => {
+    const state = addItem(createInitialPomodoroState(), "Write report");
+    const itemId = state.items[0].id;
+    const midSession = {
+      ...startSession(state, itemId),
+      activeSession: { itemId, phase: "work" as const, remainingSeconds: 42, status: "running" as const },
+    };
+
+    const next = startSession(midSession, itemId);
+
+    expect(next).toBe(midSession);
+  });
+
+  it("starts a session even if nothing was previously active, including for an item that no longer exists in state.items", () => {
+    // Not a special case any more -- switching always works regardless
+    // of what (if anything) the previous activeSession pointed at.
     const state = addItem(createInitialPomodoroState(), "Write report");
     const itemId = state.items[0].id;
     const withOrphanedSession = {
