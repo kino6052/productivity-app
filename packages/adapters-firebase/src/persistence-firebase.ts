@@ -4,52 +4,123 @@
 //
 // TPersistence<T>.load() is synchronous, but Firestore reads are inherently
 // async. Resolved as cache-then-sync: onSnapshot keeps an in-memory cache
-// up to date, and load() reads that cache synchronously. This has one
-// honest, documented limitation -- on cold start, load() returns undefined
-// until the first snapshot arrives (a real race, not hidden) -- rather than
-// forcing an async contract onto every other TPersistence<T> caller for the
-// sake of this one accident. save() writes through to Firestore and updates
-// the cache immediately, so a save followed by a load in the same session
-// sees its own write without waiting on the network.
+// up to date, and load() reads that cache synchronously. save() writes
+// through to Firestore and updates the cache immediately, so a save
+// followed by a load in the same session sees its own write without
+// waiting on the network.
+//
+// load() alone still can't see a value that arrives *after* a caller has
+// already read it once (a cold-start race: nothing calls load() again on
+// its own when the first real snapshot lands). This adapter's extra
+// subscribe() closes that gap for callers that want it -- it fires with
+// every value onSnapshot produces, including the first one, so a
+// composition root can seed its state from load() and then update it
+// again once the real value arrives, instead of quietly showing stale
+// initial state forever. TPersistence<T>'s own generic callers are
+// unaffected: subscribe is additive, not part of that contract.
 //
 // The whole value is stored as one JSON string field via core's
 // encode/decode (json-codec.ts) rather than as native Firestore fields --
 // that reuses the already-tested Date round-tripping logic and sidesteps
 // reconciling our Date-tagging scheme with Firestore's own Timestamp type.
 //
-// Operational note: this requires Firestore security rules on the
-// productivity-1be47 project that allow read/write on this document for an
-// unauthenticated client (this milestone is single-user, no auth --
-// docs/checklist.md). That's a Firebase Console setting, not something this
-// code can configure -- until it's set, save()/clear() will reject with a
-// permission-denied error.
+// Auth: this milestone has no user-facing sign-in (docs/checklist.md) --
+// anonymous auth here exists purely to satisfy Firestore's security rules
+// (`allow read, write: if request.auth != null`), not to identify anyone.
+// No UI ever surfaces a signed-in state; it's an implementation detail of
+// this one accident. Firestore access is gated on it: onSnapshot doesn't
+// attach until sign-in resolves (an unauthenticated attempt would just
+// fail with permission-denied and never reattach on its own once auth
+// arrives), and save() queues at most the latest pending value (only the
+// newest state matters for a single-document store) if a write is
+// attempted before that -- otherwise that write would fail outright and
+// never retry, since a rejected setDoc call doesn't reattempt itself the
+// way a live onSnapshot listener does.
 import { getApp, getApps, initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { deleteDoc, doc, getFirestore, onSnapshot, setDoc } from "firebase/firestore";
 import type { TPersistence } from "@productivity-app/core/src/accidents/persistence/persistence";
 import { decode, encode } from "@productivity-app/core/src/accidents/persistence/json-codec";
 import { firebaseConfig } from "./firebase-config";
 
-export function createFirebasePersistence<T>(collectionPath: string, docId: string): TPersistence<T> {
+export type TFirebasePersistence<T> = TPersistence<T> & {
+  // Fires with the current value every time onSnapshot produces one,
+  // including the first -- see the file header for why this exists.
+  subscribe: (listener: (value: T | undefined) => void) => () => void;
+};
+
+export function createFirebasePersistence<T>(collectionPath: string, docId: string): TFirebasePersistence<T> {
   const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
   const ref = doc(db, collectionPath, docId);
 
   let cachedValue: T | undefined;
+  let isAuthed = false;
+  let pendingWrite: { value: T } | undefined;
+  const listeners = new Set<(value: T | undefined) => void>();
 
-  onSnapshot(ref, (snapshot) => {
-    const payload = snapshot.data()?.payload as string | undefined;
-    cachedValue = payload === undefined ? undefined : decode<T>(payload);
+  const writeThrough = (value: T) => {
+    setDoc(ref, { payload: encode(value) }).catch((error: unknown) => {
+      console.error(`[persistence-firebase] write to ${collectionPath}/${docId} failed:`, error);
+    });
+  };
+
+  onAuthStateChanged(auth, (user) => {
+    if (user === null) return;
+    isAuthed = true;
+
+    onSnapshot(
+      ref,
+      (snapshot) => {
+        const payload = snapshot.data()?.payload as string | undefined;
+        cachedValue = payload === undefined ? undefined : decode<T>(payload);
+        for (const listener of listeners) {
+          listener(cachedValue);
+        }
+      },
+      // Previously missing entirely -- a denied read failed completely
+      // silently (no console output, nothing reaching the composition
+      // root), indistinguishable from "no document yet" or "still loading".
+      // Logged, not swallowed.
+      (error) => {
+        console.error(`[persistence-firebase] read of ${collectionPath}/${docId} failed:`, error);
+      },
+    );
+
+    if (pendingWrite !== undefined) {
+      const { value } = pendingWrite;
+      pendingWrite = undefined;
+      writeThrough(value);
+    }
+  });
+
+  signInAnonymously(auth).catch((error: unknown) => {
+    console.error(`[persistence-firebase] anonymous sign-in failed:`, error);
   });
 
   return {
     load: () => cachedValue,
     save: (value) => {
       cachedValue = value;
-      void setDoc(ref, { payload: encode(value) });
+      if (isAuthed) {
+        writeThrough(value);
+      } else {
+        pendingWrite = { value };
+      }
     },
     clear: () => {
       cachedValue = undefined;
-      void deleteDoc(ref);
+      pendingWrite = undefined;
+      if (isAuthed) {
+        deleteDoc(ref).catch((error: unknown) => {
+          console.error(`[persistence-firebase] delete of ${collectionPath}/${docId} failed:`, error);
+        });
+      }
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
     },
   };
 }

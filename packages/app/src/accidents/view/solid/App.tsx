@@ -29,20 +29,39 @@ export type TAppProps = {
   state: () => TPomodoroState;
   setState: (next: TPomodoroState) => void;
   today: Date;
+  // Optional: only index.tsx's Firestore-backed persistence has a real
+  // warm-up period (anonymous sign-in, then the first snapshot) worth
+  // showing a loading state for. index.essential-dependencies.tsx's
+  // in-memory persistence resolves synchronously, so it has nothing to
+  // pass here -- defaults to "not loading".
+  isLoading?: () => boolean;
 };
 
 export function App(props: TAppProps) {
   const [view, setView] = createSignal<TViewName>("pomodoro");
   const [projectId, setProjectId] = createSignal<string | undefined>(undefined);
+  const isLoading = () => props.isLoading?.() ?? false;
   let titleInput: HTMLInputElement | undefined;
 
   // The real-time clock driving the pomodoro timer -- tick() itself is a
   // pure essence function (already fully tested); a wall-clock interval
-  // calling it once a second is the actual accident. Safe to call
-  // unconditionally: tick() is already a documented no-op when there's no
-  // active session, or it's paused.
+  // calling it once a second is the actual accident. tick() is a
+  // documented no-op with no active/running session -- returning the
+  // exact same state reference, not a new object -- so skip persisting
+  // when it didn't actually change anything. Calling setState/persist
+  // unconditionally every second here (the original version of this
+  // code) was a real bug: with no session running, it fired the same
+  // no-op write once a second forever, both to localStorage and, once
+  // wired up, to Firestore -- caught by the sheer number of write
+  // attempts visible in the console during live testing, not by
+  // inspection.
   onMount(() => {
-    const intervalId = setInterval(() => props.setState(tick(props.state())), 1000);
+    const intervalId = setInterval(() => {
+      const next = tick(props.state());
+      if (next !== props.state()) {
+        props.setState(next);
+      }
+    }, 1000);
     onCleanup(() => clearInterval(intervalId));
   });
 
@@ -81,44 +100,46 @@ export function App(props: TAppProps) {
 
   return (
     <div class="app">
-      <Show
-        when={projectId()}
-        fallback={
-          <ProjectSelectorView
-            vm={compileProjectSelectorViewModel(props.state(), props.state, props.setState)}
-            onSelectProject={setProjectId}
-          />
-        }
-      >
-        <button class="back-button" onClick={() => setProjectId(undefined)}>
-          ← Projects
-        </button>
-        <form class="add-item-form" onSubmit={onAddItem}>
-          <input ref={titleInput} placeholder="New item title" />
-          <button type="submit">Add item</button>
-        </form>
-        <nav class="view-nav">
-          <For each={VIEWS}>
-            {(v) => (
-              <button onClick={() => setView(v)} aria-current={view() === v}>
-                {v}
-              </button>
-            )}
-          </For>
-        </nav>
-        <Show when={view() === "pomodoro"}>
-          <PomodoroView vm={compilePomodoroViewModel(scopedState(), props.state, props.setState)} />
-        </Show>
-        <Show when={view() === "kanban"}>
-          <KanbanView vm={compileKanbanViewModel(scopedState(), props.state, props.setState)} />
-        </Show>
-        <Show when={view() === "calendar"}>
-          <CalendarView
-            vm={compileCalendarViewModel(scopedState(), props.today, props.state, props.setState)}
-          />
-        </Show>
-        <Show when={view() === "notes"}>
-          <NotesView vm={compileNotesViewModel(scopedState(), props.state, props.setState, projectId())} />
+      <Show when={!isLoading()} fallback={<p class="loading-state">Loading…</p>}>
+        <Show
+          when={projectId()}
+          fallback={
+            <ProjectSelectorView
+              vm={compileProjectSelectorViewModel(props.state(), props.state, props.setState)}
+              onSelectProject={setProjectId}
+            />
+          }
+        >
+          <button class="back-button" onClick={() => setProjectId(undefined)}>
+            ← Projects
+          </button>
+          <form class="add-item-form" onSubmit={onAddItem}>
+            <input ref={titleInput} placeholder="New item title" />
+            <button type="submit">Add item</button>
+          </form>
+          <nav class="view-nav">
+            <For each={VIEWS}>
+              {(v) => (
+                <button onClick={() => setView(v)} aria-current={view() === v}>
+                  {v}
+                </button>
+              )}
+            </For>
+          </nav>
+          <Show when={view() === "pomodoro"}>
+            <PomodoroView vm={compilePomodoroViewModel(scopedState(), props.state, props.setState)} />
+          </Show>
+          <Show when={view() === "kanban"}>
+            <KanbanView vm={compileKanbanViewModel(scopedState(), props.state, props.setState)} />
+          </Show>
+          <Show when={view() === "calendar"}>
+            <CalendarView
+              vm={compileCalendarViewModel(scopedState(), props.today, props.state, props.setState)}
+            />
+          </Show>
+          <Show when={view() === "notes"}>
+            <NotesView vm={compileNotesViewModel(scopedState(), props.state, props.setState, projectId())} />
+          </Show>
         </Show>
       </Show>
     </div>
