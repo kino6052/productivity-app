@@ -8,10 +8,9 @@
 // TPersistence<T> backs the initial state and every write.
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import type { TPomodoroState } from "@productivity-app/pomodoro-essence/src/essence/state";
-import { tick } from "@productivity-app/pomodoro-essence/src/essence/tick";
 import { addItem } from "@productivity-app/core/src/essence/item";
 import { assignToProject } from "@productivity-app/projects-essence/src/essence/assign-to-project";
-import { compilePomodoroViewModel } from "../../../view-models/pomodoro-view-model";
+import { compilePomodoroViewModel, onTick } from "../../../view-models/pomodoro-view-model";
 import { compileKanbanViewModel } from "../../../view-models/kanban-view-model";
 import { compileCalendarViewModel } from "../../../view-models/calendar-view-model";
 import { compileNotesViewModel } from "../../../view-models/notes-view-model";
@@ -46,23 +45,19 @@ export function App(props: TAppProps) {
 
   // The real-time clock driving the pomodoro timer -- tick() itself is a
   // pure essence function (already fully tested); a wall-clock interval
-  // calling it once a second is the actual accident. tick() is a
-  // documented no-op with no active/running session -- returning the
-  // exact same state reference, not a new object -- so skip persisting
-  // when it didn't actually change anything. Calling setState/persist
-  // unconditionally every second here (the original version of this
-  // code) was a real bug: with no session running, it fired the same
-  // no-op write once a second forever, both to localStorage and, once
-  // wired up, to Firestore -- caught by the sheer number of write
-  // attempts visible in the console during live testing, not by
-  // inspection.
+  // calling it once a second is the actual accident. onTick (the
+  // view-model tier) wraps tick(): it skips persisting when tick() is a
+  // documented no-op (returns the exact same state reference -- calling
+  // setState/persist unconditionally every second here, the original
+  // version of this code, was a real bug: with no session running, it
+  // fired the same no-op write once a second forever, both to
+  // localStorage and, once wired up, to Firestore -- caught by the sheer
+  // number of write attempts visible in the console during live testing,
+  // not by inspection), and it's also where finishing a work phase syncs
+  // the item to kanban's "done" column (requested cross-app sync; see
+  // onTick's own comment in pomodoro-view-model.ts).
   onMount(() => {
-    const intervalId = setInterval(() => {
-      const next = tick(props.state());
-      if (next !== props.state()) {
-        props.setState(next);
-      }
-    }, 1000);
+    const intervalId = setInterval(() => onTick(props.state, props.setState), 1000);
     onCleanup(() => clearInterval(intervalId));
   });
 

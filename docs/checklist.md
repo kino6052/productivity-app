@@ -314,6 +314,49 @@ right-click) is identical everywhere and only the action list differs:
       since this environment's Browser tool doesn't emulate real touch
       pointer events.
 
+## Part 12 — Pomodoro ↔ Kanban Auto-Sync (new, requested — built)
+
+Requested: starting a pomodoro session should automatically show the item
+as "in progress" on kanban, and finishing (or otherwise completing) it
+should automatically move it to "done".
+
+Kept pomodoro-essence and kanban-essence mutually unaware of each other,
+same as every other cross-app interconnection (Part 6) — the orchestration
+lives at the **view-model tier**, the same layer that already chains
+essence calls across packages (`onCreateProject` chaining `addItem` +
+`assignToProject`, Part 10):
+
+- [x] `onStartSession` (pomodoro-view-model.ts) now also calls kanban-essence's
+      `moveItem(next, itemId, "doing")` after a session genuinely starts —
+      skipped when `startSession` is a no-op (a session is already
+      running, returns the same reference), so starting is only "in
+      progress" when it actually happened (→ `onStartSession`, packages/app/src/view-models/pomodoro-view-model.ts)
+- [x] New `onTick(getState, setState)` wraps `tick()`: detects the
+      work → break transition (the same moment `completeSession` already
+      fires internally, incrementing `pomodoro.completedCount`) by
+      comparing the phase before/after, and calls `moveItem(next, itemId, "done")`
+      only on that transition. Also carries forward the existing "skip
+      persisting a no-op tick" fix from Part 7 (App.tsx's interval no
+      longer needs to know about kanban, or do that comparison itself)
+      (→ `onTick`, same file)
+- [x] `App.tsx`'s pomodoro clock interval now calls `onTick(props.state, props.setState)`
+      instead of `tick()` + a manual reference-equality check — the check
+      and the kanban sync both moved into the view-model tier.
+- [x] Tested with `createMemoryState`, same idiom as every other
+      view-model test: asserts the real `kanban.column` after
+      `onStartClick`, confirms a rejected (already-running) start doesn't
+      touch kanban, confirms a plain decrementing tick doesn't touch
+      kanban, and confirms a work-phase-completing tick does move the
+      item to `"done"`. 159 tests pass, 100% branch coverage held
+      (107/107).
+- [x] **Verified live** against the real Firestore-backed app: added an
+      item, clicked Start on its Pomodoro row, and immediately confirmed
+      it appeared in Kanban's "Doing" column — a real reactive update
+      through Solid + Firestore, not just a unit test. (The "done"
+      transition was verified only via the deterministic unit test above,
+      not live — the real work phase is 25 minutes long, not something to
+      sit through in a live check.)
+
 ## Open Questions
 
 - [x] Is a "note" strictly plain text for now, or does `note.body` need to support richer block types (checklist, image) from the start? Resolved in Part 5: `body` is a plain `string`; richer block types would be a future facet-shape change, not needed yet.
